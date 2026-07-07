@@ -10,7 +10,7 @@ OUTPUT_DIR = BASE_DIR / "output"
 TEMP_RUNNER_PATH = OUTPUT_DIR / "_temp_runner.py"
 
 USER_INPUT_PATTERN = re.compile(
-    r"# 1\. USER INPUT AREA.*?# 2\. BASIC VECTOR FUNCTIONS",
+    r"# 1\. USER INPUT AREA.*?# END USER INPUT AREA",
     re.DOTALL,
 )
 
@@ -38,8 +38,8 @@ def format_holes_dict(holes_by_segment: dict) -> str:
     return "\n".join(lines)
 
 
-def _abs_path(path: Path) -> str:
-    return str(path.resolve())
+def _inject_path(path: Path) -> str:
+    return str(path.resolve()).replace("\\", "/")
 
 
 def _build_user_input_area(params: dict, step_path: Path) -> str:
@@ -65,7 +65,7 @@ HOLES_BY_SEGMENT = {holes_block}
 
 EXPORT_STEP = True
 filename = "{filename}"
-EXPORT_FILENAME = r"{_abs_path(step_path)}"
+EXPORT_FILENAME = r"{_inject_path(step_path)}"
 
 Customcircledim = {params['custom_circle_dim']}
 Customslotwidth = {params['custom_slot_width']}
@@ -81,7 +81,8 @@ Customcircledim2 = {params['custom_circle_dim2']}
 def _prepare_source(params: dict) -> str:
     filename = params["filename"]
     step_path = OUTPUT_DIR / f"{filename}.step"
-    glb_path = OUTPUT_DIR / f"{filename}.glb"
+    stl_path = OUTPUT_DIR / f"{filename}.stl"
+    stl_path_str = _inject_path(stl_path)
 
     source = GENERATOR_PATH.read_text(encoding="utf-8")
     user_input = _build_user_input_area(params, step_path)
@@ -89,24 +90,19 @@ def _prepare_source(params: dict) -> str:
     if not USER_INPUT_PATTERN.search(source):
         raise ValueError("USER INPUT AREA block not found in generator file")
 
-    replacement = (
-        user_input.rstrip()
-        + "\n\n# ============================================================\n# 2. BASIC VECTOR FUNCTIONS"
-    )
-    source = USER_INPUT_PATTERN.sub(lambda _: replacement, source, count=1)
+    source = USER_INPUT_PATTERN.sub(lambda _: user_input.rstrip(), source, count=1)
     source = source.replace("show_object(busbar)", "# show_object(busbar)")
 
-    glb_block = f"""
+    stl_block = f"""
 if busbar is not None:
-    _glb_path = r"{_abs_path(glb_path)}"
-    cq.exporters.export(busbar, _glb_path)
-    print("Exported GLB:", _glb_path)
+    cq.exporters.export(busbar, r"{stl_path_str}")
+    print("Exported STL: {stl_path_str}")
 """
     marker = 'print(f"Exported STEP file: {EXPORT_FILENAME}")'
     if marker in source:
-        source = source.replace(marker, marker + glb_block, 1)
+        source = source.replace(marker, marker + stl_block, 1)
     else:
-        source = source + glb_block
+        source = source + stl_block
 
     return source
 
@@ -115,7 +111,7 @@ def run_generation(params: dict) -> dict:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     filename = params["filename"]
     step_file = OUTPUT_DIR / f"{filename}.step"
-    glb_file = OUTPUT_DIR / f"{filename}.glb"
+    stl_file = OUTPUT_DIR / f"{filename}.stl"
     log = ""
 
     try:
@@ -133,7 +129,7 @@ def run_generation(params: dict) -> dict:
         if result.returncode != 0:
             return {"status": "error", "message": log.strip() or f"Subprocess exited with code {result.returncode}"}
 
-        if not step_file.is_file() or not glb_file.is_file():
+        if not step_file.is_file() or not stl_file.is_file():
             return {
                 "status": "error",
                 "message": log.strip() or "Output files missing after subprocess completed",
@@ -142,7 +138,7 @@ def run_generation(params: dict) -> dict:
         return {
             "status": "ok",
             "step_file": f"output/{filename}.step",
-            "glb_file": f"output/{filename}.glb",
+            "stl_file": f"output/{filename}.stl",
             "log": log,
         }
     except Exception as exc:
