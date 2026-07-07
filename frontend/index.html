@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busbar Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #1a1a2e; color: #eaeaea; min-height: 100vh; line-height: 1.5; }
+    .page { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #a0a0b8; margin-bottom: 2rem; font-size: 0.95rem; }
+    .section { background: #16213e; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.25rem; }
+    .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid #0f3460; padding-bottom: 0.5rem; }
+    .section-with-ref { display: grid; grid-template-columns: 1fr 220px; gap: 1.25rem; align-items: start; }
+    @media (max-width: 768px) { .section-with-ref { grid-template-columns: 1fr; } }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    @media (max-width: 640px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.35rem; color: #c8c8d8; }
+    input, select { width: 100%; padding: 0.55rem 0.75rem; background: #0f3460; color: #eaeaea; border: 1px solid #0f3460; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+    input:focus, select:focus { outline: none; border-color: #e94560; }
+    .helper { font-size: 0.8rem; color: #9090a8; margin-top: 0.35rem; }
+    .ref-panel { background: #0f3460; border: 1px dashed #e94560; border-radius: 8px; min-height: 140px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 1rem; font-size: 0.75rem; color: #9090a8; }
+    .ref-panel img { max-width: 100%; max-height: 180px; border-radius: 4px; }
+    .segment-controls { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
+    .segment-controls .field { max-width: 180px; }
+    .btn { padding: 0.55rem 1rem; border: none; border-radius: 4px; font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn:hover { opacity: 0.9; }
+    .btn-secondary { background: #0f3460; color: #eaeaea; border: 1px solid #e94560; }
+    .btn-accent { background: #e94560; color: #fff; }
+    .btn-small { padding: 0.35rem 0.65rem; font-size: 0.8rem; }
+    .segments-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+    .segment-field, .bend-field { min-width: 120px; }
+    .bend-arrow { color: #e94560; font-weight: 700; padding-bottom: 0.6rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.75rem; }
+    th, td { border: 1px solid #0f3460; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #0f3460; font-weight: 600; }
+    .hole-panel { background: #0f3460; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+    .hole-panel-header { font-weight: 600; margin-bottom: 0.75rem; }
+    .feature-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 0.5rem; align-items: start; margin-bottom: 0.5rem; }
+    .position-list { display: flex; flex-direction: column; gap: 0.35rem; }
+    .position-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 0.35rem; align-items: center; }
+    .position-row input { font-size: 0.85rem; padding: 0.4rem 0.5rem; }
+    .btn-icon { background: transparent; border: 1px solid #e94560; color: #e94560; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; }
+    .generate-wrap { margin-top: 1.5rem; }
+    .btn-generate { width: 100%; padding: 1rem; font-size: 1.05rem; border-radius: 8px; }
+    .spinner { display: none; text-align: center; margin-top: 1rem; color: #e94560; }
+    .spinner.active { display: block; }
+    .error-msg { display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(233, 69, 96, 0.15); border: 1px solid #e94560; border-radius: 4px; color: #ff6b6b; font-size: 0.9rem; }
+    .error-msg.active { display: block; }
+    .ref-options li { font-size: 0.8rem; color: #9090a8; margin-left: 1.2rem; margin-bottom: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Busbar Generator</h1>
+    <p class="subtitle">Configure dimensions, bends, and features — generate STEP + 3D preview</p>
+
+    <div class="section">
+      <div class="section-title">Bar Dimensions</div>
+      <div class="grid-3">
+        <div><label for="bar_thickness">Bar Thickness (mm)</label><input type="number" id="bar_thickness" value="10" step="0.1"></div>
+        <div><label for="bar_width">Bar Width (mm)</label><input type="number" id="bar_width" value="80" step="0.1"></div>
+        <div><label for="bend_radius">Inner Bend Radius (mm)</label><input type="number" id="bend_radius" value="10" step="0.1"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Filename</div>
+      <div>
+        <label for="filename">Output filename</label>
+        <input type="text" id="filename" value="busbar">
+        <p class="helper">Output files will be saved as <span id="filename-preview">busbar</span>.step and <span id="filename-preview2">busbar</span>.stl</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Length Reference</div>
+      <div class="section-with-ref">
+        <div>
+          <label for="length_reference">Reference type</label>
+          <select id="length_reference">
+            <option value="outside" selected>Outside</option>
+            <option value="inside">Inside</option>
+            <option value="centerline">Centerline</option>
+          </select>
+          <ul class="ref-options">
+            <li><strong>Outside:</strong> drawing dimension taken from outer edge of bar through the bend</li>
+            <li><strong>Inside:</strong> dimension taken from inner edge</li>
+            <li><strong>Centerline:</strong> dimension taken from bar centerline</li>
+          </ul>
+        </div>
+        <div class="ref-panel" id="length-ref-panel">Reference diagram — add photo to frontend/assets/length_reference.png</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Segments &amp; Bends</div>
+      <div class="section-with-ref">
+        <div>
+          <div class="segment-controls">
+            <div class="field"><label for="num_segments">Number of segments</label><input type="number" id="num_segments" value="4" min="1" step="1"></div>
+            <button type="button" class="btn btn-secondary" id="update-segments">Update</button>
+          </div>
+          <div class="segments-row" id="segments-container"></div>
+          <p class="helper" style="margin-top:0.75rem">Bend angle: +ve = clockwise, -ve = counterclockwise</p>
+        </div>
+        <div class="ref-panel" id="segments-ref-panel">Reference diagram — add photo to frontend/assets/segments_bends.png</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Custom Feature Dimensions</div>
+      <div class="section-with-ref">
+        <div>
+          <div class="grid-2">
+            <div><label for="custom_circle_dim">Custom Circle Ø (j)</label><input type="number" id="custom_circle_dim" value="5.5" step="0.1"></div>
+            <div><label for="custom_circle_dim2">Custom Circle Ø 2 (k)</label><input type="number" id="custom_circle_dim2" value="0" step="0.1"></div>
+            <div><label for="custom_slot_width">Custom Slot Width (i)</label><input type="number" id="custom_slot_width" value="11" step="0.1"></div>
+            <div><label for="custom_slot_length">Custom Slot Length (i)</label><input type="number" id="custom_slot_length" value="16" step="0.1"></div>
+          </div>
+          <table>
+            <thead><tr><th>Letter</th><th>Type</th><th>Size</th></tr></thead>
+            <tbody>
+              <tr><td>a</td><td>Round hole</td><td>Ø11</td></tr>
+              <tr><td>b</td><td>Round hole</td><td>Ø13</td></tr>
+              <tr><td>c</td><td>Round hole</td><td>Ø14</td></tr>
+              <tr><td>d</td><td>Round hole</td><td>Ø22</td></tr>
+              <tr><td>h</td><td>Round hole</td><td>Ø5</td></tr>
+              <tr><td>e</td><td>Compound slot</td><td>13×18</td></tr>
+              <tr><td>f</td><td>Compound slot</td><td>9×14</td></tr>
+              <tr><td>g</td><td>Compound slot</td><td>11×15</td></tr>
+              <tr><td>i</td><td>Custom slot</td><td>width × length (set above)</td></tr>
+              <tr><td>j</td><td>Custom round</td><td>Ø (set above)</td></tr>
+              <tr><td>k</td><td>Custom round 2</td><td>Ø (set above)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ref-panel" id="feature-ref-panel">Feature type reference — add photo to frontend/assets/feature_types.png</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Holes / Features per Segment</div>
+      <div class="section-with-ref">
+        <div id="holes-container"></div>
+        <div class="ref-panel" id="holes-ref-panel">Hole position reference — add photo to frontend/assets/hole_positions.png</div>
+      </div>
+    </div>
+
+    <div class="generate-wrap">
+      <button type="button" class="btn btn-accent btn-generate" id="generate-btn">Generate STEP + 3D Preview</button>
+      <div class="spinner" id="spinner">Generating…</div>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const FEATURE_LETTERS = ['a','b','c','d','e','f','g','h','i','j','k'];
+    let segmentCount = 4;
+    let holeState = {};
+
+    function tryLoadRef(panelId, assetPath, fallbackText) {
+      const panel = document.getElementById(panelId);
+      const img = new Image();
+      img.onload = () => { panel.innerHTML = ''; panel.appendChild(img); };
+      img.onerror = () => { panel.textContent = fallbackText; };
+      img.src = assetPath;
+      img.alt = 'Reference diagram';
+    }
+
+    function updateFilenamePreview() {
+      const name = document.getElementById('filename').value || 'busbar';
+      document.getElementById('filename-preview').textContent = name;
+      document.getElementById('filename-preview2').textContent = name;
+    }
+
+    function getSegmentLengths() {
+      const lengths = [];
+      for (let i = 1; i <= segmentCount; i++) {
+        const el = document.getElementById(`seg_len_${i}`);
+        lengths.push(parseFloat(el?.value) || 0);
+      }
+      return lengths;
+    }
+
+    function renderSegments() {
+      const container = document.getElementById('segments-container');
+      const prevLengths = getSegmentLengths();
+      const prevAngles = [];
+      for (let i = 1; i < segmentCount; i++) {
+        prevAngles.push(parseFloat(document.getElementById(`bend_angle_${i}`)?.value) || 0);
+      }
+      container.innerHTML = '';
+      for (let i = 1; i <= segmentCount; i++) {
+        const segDiv = document.createElement('div');
+        segDiv.className = 'segment-field';
+        segDiv.innerHTML = `<label for="seg_len_${i}">Segment ${i} length (mm)</label><input type="number" id="seg_len_${i}" step="0.001" value="${prevLengths[i-1] ?? (i === 1 ? 97 : i === 2 ? 210 : i === 3 ? 72.9 : 200.998)}">`;
+        container.appendChild(segDiv);
+        if (i < segmentCount) {
+          const arrow = document.createElement('span');
+          arrow.className = 'bend-arrow';
+          arrow.textContent = '→';
+          container.appendChild(arrow);
+          const bendDiv = document.createElement('div');
+          bendDiv.className = 'bend-field';
+          bendDiv.innerHTML = `<label for="bend_angle_${i}">Bend ${i} angle (°)</label><input type="number" id="bend_angle_${i}" step="0.1" value="${prevAngles[i-1] ?? (i === 1 ? 90 : i === 2 ? -10 : 10)}">`;
+          container.appendChild(bendDiv);
+        }
+      }
+      renderHoles();
+    }
+
+    function renderHoles() {
+      const container = document.getElementById('holes-container');
+      const lengths = getSegmentLengths();
+      const newState = {};
+      for (let i = 1; i <= segmentCount; i++) newState[String(i)] = holeState[String(i)] || [];
+      holeState = newState;
+      container.innerHTML = '';
+      for (let i = 1; i <= segmentCount; i++) {
+        const key = String(i);
+        const panel = document.createElement('div');
+        panel.className = 'hole-panel';
+        const header = document.createElement('div');
+        header.className = 'hole-panel-header';
+        header.id = `hole-header-${i}`;
+        header.textContent = `Segment ${i} — ${lengths[i-1] ?? 0} mm`;
+        panel.appendChild(header);
+        const featuresDiv = document.createElement('div');
+        featuresDiv.id = `features-${i}`;
+        holeState[key].forEach((feat, fi) => renderFeatureRow(featuresDiv, key, fi, feat));
+        panel.appendChild(featuresDiv);
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-secondary btn-small';
+        addBtn.textContent = 'Add feature';
+        addBtn.style.marginTop = '0.5rem';
+        addBtn.onclick = () => { holeState[key].push({ letter: 'a', positions: [{ from_top: 0, from_left: 0 }] }); renderHoles(); };
+        panel.appendChild(addBtn);
+        container.appendChild(panel);
+      }
+    }
+
+    function renderFeatureRow(parent, segKey, featIdx, feat) {
+      const row = document.createElement('div');
+      row.className = 'feature-row';
+      const letterSelect = document.createElement('select');
+      FEATURE_LETTERS.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l; opt.textContent = l;
+        if (l === feat.letter) opt.selected = true;
+        letterSelect.appendChild(opt);
+      });
+      letterSelect.onchange = () => { holeState[segKey][featIdx].letter = letterSelect.value; };
+      const posList = document.createElement('div');
+      posList.className = 'position-list';
+      feat.positions.forEach((pos, pi) => {
+        const posRow = document.createElement('div');
+        posRow.className = 'position-row';
+        posRow.innerHTML = `<input type="number" placeholder="from top" step="0.1" value="${pos.from_top}"><input type="number" placeholder="from left" step="0.1" value="${pos.from_left}">`;
+        const inputs = posRow.querySelectorAll('input');
+        inputs[0].onchange = () => { holeState[segKey][featIdx].positions[pi].from_top = parseFloat(inputs[0].value) || 0; };
+        inputs[1].onchange = () => { holeState[segKey][featIdx].positions[pi].from_left = parseFloat(inputs[1].value) || 0; };
+        const addPos = document.createElement('button');
+        addPos.type = 'button'; addPos.className = 'btn-icon'; addPos.textContent = '+';
+        addPos.onclick = () => { holeState[segKey][featIdx].positions.push({ from_top: 0, from_left: 0 }); renderHoles(); };
+        const removePos = document.createElement('button');
+        removePos.type = 'button'; removePos.className = 'btn-icon'; removePos.textContent = '×';
+        removePos.onclick = () => {
+          holeState[segKey][featIdx].positions.splice(pi, 1);
+          if (holeState[segKey][featIdx].positions.length === 0) holeState[segKey].splice(featIdx, 1);
+          renderHoles();
+        };
+        posRow.appendChild(addPos); posRow.appendChild(removePos);
+        posList.appendChild(posRow);
+      });
+      const removeFeat = document.createElement('button');
+      removeFeat.type = 'button'; removeFeat.className = 'btn-icon'; removeFeat.textContent = '×';
+      removeFeat.onclick = () => { holeState[segKey].splice(featIdx, 1); renderHoles(); };
+      row.appendChild(letterSelect); row.appendChild(posList); row.appendChild(removeFeat);
+      parent.appendChild(row);
+    }
+
+    function collectHolesBySegment() {
+      const result = {};
+      for (let i = 1; i <= segmentCount; i++) {
+        const key = String(i);
+        const features = holeState[key] || [];
+        if (!features.length) { result[key] = {}; continue; }
+        const segObj = {};
+        features.forEach(feat => {
+          if (!segObj[feat.letter]) segObj[feat.letter] = [];
+          feat.positions.forEach(p => segObj[feat.letter].push([p.from_top, p.from_left]));
+        });
+        result[key] = segObj;
+      }
+      return result;
+    }
+
+    function collectPayload() {
+      const drawing_lengths = getSegmentLengths();
+      const bend_angles = [];
+      for (let i = 1; i < segmentCount; i++) bend_angles.push(parseFloat(document.getElementById(`bend_angle_${i}`).value) || 0);
+      return {
+        bar_thickness: parseFloat(document.getElementById('bar_thickness').value),
+        bar_width: parseFloat(document.getElementById('bar_width').value),
+        bend_radius: parseFloat(document.getElementById('bend_radius').value),
+        drawing_lengths, bend_angles,
+        length_reference: document.getElementById('length_reference').value,
+        holes_by_segment: collectHolesBySegment(),
+        custom_circle_dim: parseFloat(document.getElementById('custom_circle_dim').value),
+        custom_slot_width: parseFloat(document.getElementById('custom_slot_width').value),
+        custom_slot_length: parseFloat(document.getElementById('custom_slot_length').value),
+        custom_circle_dim2: parseFloat(document.getElementById('custom_circle_dim2').value),
+        filename: document.getElementById('filename').value || 'busbar',
+      };
+    }
+
+    async function generate() {
+      const spinner = document.getElementById('spinner');
+      const errorMsg = document.getElementById('error-msg');
+      const btn = document.getElementById('generate-btn');
+      spinner.classList.add('active'); errorMsg.classList.remove('active'); btn.disabled = true;
+      try {
+        const payload = collectPayload();
+        const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail?.message || data.message || JSON.stringify(data));
+        const stlFilename = data.stl_file.split('/').pop();
+        window.location.href = `/viewer?file=${encodeURIComponent(stlFilename)}`;
+      } catch (err) {
+        errorMsg.textContent = err.message; errorMsg.classList.add('active');
+      } finally {
+        spinner.classList.remove('active'); btn.disabled = false;
+      }
+    }
+
+    document.getElementById('update-segments').addEventListener('click', () => {
+      segmentCount = Math.max(1, parseInt(document.getElementById('num_segments').value, 10) || 1);
+      document.getElementById('num_segments').value = segmentCount;
+      renderSegments();
+    });
+    document.getElementById('filename').addEventListener('input', updateFilenamePreview);
+    document.getElementById('generate-btn').addEventListener('click', generate);
+    document.getElementById('segments-container').addEventListener('input', (e) => {
+      if (e.target.id?.startsWith('seg_len_')) {
+        const i = e.target.id.replace('seg_len_', '');
+        const header = document.getElementById(`hole-header-${i}`);
+        if (header) header.textContent = `Segment ${i} — ${e.target.value} mm`;
+      }
+    });
+    tryLoadRef('length-ref-panel', '/static/assets/length_reference.png', 'Reference diagram — add photo to frontend/assets/length_reference.png');
+    tryLoadRef('segments-ref-panel', '/static/assets/segments_bends.png', 'Reference diagram — add photo to frontend/assets/segments_bends.png');
+    tryLoadRef('feature-ref-panel', '/static/assets/feature_types.png', 'Feature type reference — add photo to frontend/assets/feature_types.png');
+    tryLoadRef('holes-ref-panel', '/static/assets/hole_positions.png', 'Hole position reference — add photo to frontend/assets/hole_positions.png');
+    for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
+    renderSegments();
+    updateFilenamePreview();
+  </script>
+</body>
+</html>
