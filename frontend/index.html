@@ -12,10 +12,10 @@
 body { font-family: 'Inter', sans-serif; background: #F4F6F9; color: #1B2A4A; min-height: 100vh; line-height: 1.5; }
 
 /* ── Top bar ── */
-.topbar { background: #1B2A4A; padding: 0.75rem 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 3px solid #3DCD58; }
-.topbar-logo { height: 36px; width: auto; }
-.topbar-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.2); margin: 0 0.5rem; }
-.topbar-label { color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.topbar { background: #fff; padding: 0.75rem 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 3px solid #3DCD58; }
+.topbar-logo { height: 56px; width: auto; }
+.topbar-divider { width: 1px; height: 40px; background: #E2E8F0; margin: 0 0.5rem; }
+.topbar-label { color: #6B7A99; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* ── Page ── */
 .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
@@ -38,6 +38,9 @@ label { display: block; font-size: 0.75rem; font-weight: 600; color: #6B7A99; ma
 input, select { width: 100%; padding: 0.5rem 0.75rem; background: #F8FAFC; color: #1B2A4A; border: 1px solid #CBD5E1; border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
 input:focus, select:focus { outline: none; border-color: #3DCD58; background: #fff; }
 .helper { font-size: 0.75rem; color: #94A3B8; margin-top: 0.3rem; }
+input[type=number] { -moz-appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ── Reference panel ── */
 .ref-panel { border: 1.5px dashed #CBD5E1; border-radius: 8px; min-height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0.75rem; font-size: 0.72rem; color: #94A3B8; background: #F8FAFC; line-height: 1.5; gap: 0.4rem; }
@@ -68,11 +71,17 @@ tr:last-child td { border-bottom: none; }
 .hole-panel { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem; margin-bottom: 0.6rem; }
 .hole-panel-header { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.75rem; color: #1B2A4A; }
 
-/* ── Feature rows (Type / From Top / From Left columns) ── */
-.feature-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 0.5rem; align-items: start; margin-bottom: 0.5rem; }
-.feature-col-headers { display: grid; grid-template-columns: 80px 1fr 28px; gap: 0.5rem; margin-bottom: 0.3rem; }
-.feature-col-headers .col-label { font-size: 0.68rem; font-weight: 700; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.05em; }
-.pos-col-headers { display: grid; grid-template-columns: 1fr 1fr 28px 28px; gap: 0.35rem; margin-bottom: 0.25rem; }
+/* ── Feature rows ── */
+.feature-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 0.5rem; align-items: start; margin-bottom: 0.75rem; }
+.feature-body { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.pos-toggles { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.toggle-pair { display: inline-flex; }
+.toggle-btn { font-size: 0.72rem; padding: 0.3rem 0.6rem; cursor: pointer; border: 1px solid #CBD5E1; background: #fff; color: #6B7A99; font-family: inherit; font-weight: 600; }
+.toggle-btn:first-child { border-radius: 4px 0 0 4px; }
+.toggle-btn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+.toggle-btn.active { background: #1B2A4A; color: #fff; border-color: #1B2A4A; }
+.toggle-btn.active + .toggle-btn { border-left-color: #1B2A4A; }
+.pos-col-headers { display: grid; grid-template-columns: 1fr 1fr 28px 28px; gap: 0.35rem; }
 .pos-col-headers span { font-size: 0.68rem; font-weight: 700; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
 .position-list { display: flex; flex-direction: column; gap: 0.35rem; }
 .position-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 0.35rem; align-items: center; }
@@ -102,6 +111,55 @@ tr:last-child td { border-bottom: none; }
 .ref-options li { font-size: 0.8rem; color: #6B7A99; margin-bottom: 0.3rem; padding-left: 0.9rem; position: relative; }
 .ref-options li::before { content: "•"; position: absolute; left: 0; color: #3DCD58; }
 .ref-options li strong { color: #1B2A4A; }
+
+/* ── Floating calculator ── */
+#calc-toggle {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100;
+  background: #1B2A4A; color: #fff; border: none; border-radius: 8px;
+  padding: 0.5rem 0.9rem; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+#calc-panel {
+  position: fixed; bottom: 5rem; right: 1.5rem; z-index: 100;
+  width: 280px; background: #fff; border: 1px solid #E2E8F0;
+  border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  display: none; overflow: hidden;
+}
+#calc-panel.open { display: block; }
+.calc-header {
+  background: #1B2A4A; color: #fff; padding: 0.65rem 0.85rem;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.85rem; font-weight: 700; border-bottom: 3px solid #3DCD58;
+}
+#calc-close {
+  background: transparent; border: none; color: #fff; font-size: 1.1rem;
+  cursor: pointer; line-height: 1; padding: 0 0.2rem;
+}
+#calc-display {
+  padding: 0.75rem 0.85rem; text-align: right; min-height: 40px;
+  font-size: 1.05rem; font-weight: 600; color: #1B2A4A;
+  background: #F8FAFC; border-bottom: 1px solid #E2E8F0;
+  word-break: break-all;
+}
+.calc-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;
+  padding: 0.65rem;
+}
+.calc-btn {
+  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;
+  font-size: 0.9rem; padding: 0.55rem; width: 100%; cursor: pointer;
+  font-family: inherit; color: #1B2A4A;
+}
+.calc-btn.trig { font-weight: 600; color: #1B2A4A; }
+.calc-btn.equals { background: #1B2A4A; color: #fff; border-color: #1B2A4A; }
+.calc-btn.backspace { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+#calc-paste {
+  display: block; width: calc(100% - 1.3rem); margin: 0 0.65rem 0.65rem;
+  background: #3DCD58; color: #fff; border: none; border-radius: 6px;
+  padding: 0.55rem; font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; font-family: inherit;
+}
+#calc-paste:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -112,10 +170,7 @@ tr:last-child td { border-bottom: none; }
   <span class="topbar-label">Busbar Generator</span>
 </div>
 
-<div class="page">
-  <h1 class="page-title">Busbar generator</h1>
-  <p class="page-sub">Configure dimensions, bends, and features — generate STEP and 3D preview</p>
-
+<div class="page" id="form-root">
   <!-- Section 1: Bar Dimensions -->
   <div class="section">
     <div class="section-title">Bar dimensions</div>
@@ -222,10 +277,24 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
+<button type="button" id="calc-toggle">⊞ Calc</button>
+<div id="calc-panel">
+  <div class="calc-header">
+    <span>Calculator</span>
+    <button type="button" id="calc-close" aria-label="Close">×</button>
+  </div>
+  <div id="calc-display">0</div>
+  <div class="calc-grid" id="calc-grid"></div>
+  <button type="button" id="calc-paste" disabled>Paste to field</button>
+</div>
+
   <script>
     const FEATURE_LETTERS = ['a','b','c','d','e','f','g','h','i','j','k'];
     let segmentCount = 4;
     let holeState = {};
+    let calcExpression = '';
+    let calcResult = null;
+    let lastFocusedInput = null;
 
     function tryLoadRef(panelId, assetPath, fallbackText) {
       const panel = document.getElementById(panelId);
@@ -249,6 +318,16 @@ tr:last-child td { border-bottom: none; }
         lengths.push(parseFloat(el?.value) || 0);
       }
       return lengths;
+    }
+
+    function convertPosition(length_val, width_val, lengthRef, widthRef, segmentLength, barWidth) {
+      const from_top = lengthRef === 'top'
+        ? length_val
+        : segmentLength - length_val;
+      const from_left = widthRef === 'left'
+        ? width_val
+        : barWidth - width_val;
+      return [from_top, from_left];
     }
 
     function renderSegments() {
@@ -278,6 +357,25 @@ tr:last-child td { border-bottom: none; }
       renderHoles();
     }
 
+    function makeTogglePair(options, activeValue, onSelect) {
+      const pair = document.createElement('div');
+      pair.className = 'toggle-pair';
+      options.forEach(([value, label]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'toggle-btn' + (activeValue === value ? ' active' : '');
+        btn.textContent = label;
+        btn.onclick = () => onSelect(value);
+        pair.appendChild(btn);
+      });
+      return pair;
+    }
+
+    function posInputValueAttr(val) {
+      if (val === null || val === undefined || val === '' || Number(val) === 0) return '';
+      return ` value="${val}"`;
+    }
+
     function renderHoles() {
       const container = document.getElementById('holes-container');
       const lengths = getSegmentLengths();
@@ -296,37 +394,41 @@ tr:last-child td { border-bottom: none; }
         panel.appendChild(header);
         const featuresDiv = document.createElement('div');
         featuresDiv.id = `features-${i}`;
-        if (holeState[key].length > 0) {
-          const colHeaders = document.createElement('div');
-          colHeaders.className = 'feature-col-headers';
-          colHeaders.innerHTML = `
-            <span class="col-label">Type</span>
-            <div class="pos-col-headers">
-              <span>From top (mm)</span>
-              <span>From left (mm)</span>
-              <span></span>
-              <span></span>
-            </div>
-            <span></span>
-          `;
-          featuresDiv.appendChild(colHeaders);
-        }
-        holeState[key].forEach((feat, fi) => renderFeatureRow(featuresDiv, key, fi, feat));
+        holeState[key].forEach((feat, fi) => renderFeatureRow(featuresDiv, key, fi, feat, i, segmentCount));
         panel.appendChild(featuresDiv);
         const addBtn = document.createElement('button');
         addBtn.type = 'button';
         addBtn.className = 'btn btn-secondary btn-small';
         addBtn.textContent = 'Add feature';
         addBtn.style.marginTop = '0.5rem';
-        addBtn.onclick = () => { holeState[key].push({ letter: 'a', positions: [{ from_top: 0, from_left: 0 }] }); renderHoles(); };
+        addBtn.onclick = () => {
+          const segNum = i;
+          const isLast = (segNum === segmentCount);
+          const defaultLengthRef = isLast ? 'bottom' : 'top';
+          holeState[key].push({
+            letter: 'a',
+            lengthRef: defaultLengthRef,
+            widthRef: 'left',
+            positions: [{ length_val: 0, width_val: 0 }]
+          });
+          renderHoles();
+        };
         panel.appendChild(addBtn);
         container.appendChild(panel);
       }
     }
 
-    function renderFeatureRow(parent, segKey, featIdx, feat) {
+    function renderFeatureRow(parent, segKey, featIdx, feat, segNum, totalSegs) {
+      if (!feat.lengthRef) feat.lengthRef = (segNum === totalSegs) ? 'bottom' : 'top';
+      if (!feat.widthRef) feat.widthRef = 'left';
+      feat.positions = (feat.positions || []).map(p => ({
+        length_val: p.length_val ?? p.from_top ?? 0,
+        width_val: p.width_val ?? p.from_left ?? 0,
+      }));
+
       const row = document.createElement('div');
       row.className = 'feature-row';
+
       const letterSelect = document.createElement('select');
       FEATURE_LETTERS.forEach(l => {
         const opt = document.createElement('option');
@@ -335,18 +437,55 @@ tr:last-child td { border-bottom: none; }
         letterSelect.appendChild(opt);
       });
       letterSelect.onchange = () => { holeState[segKey][featIdx].letter = letterSelect.value; };
+
+      const body = document.createElement('div');
+      body.className = 'feature-body';
+
+      const toggles = document.createElement('div');
+      toggles.className = 'pos-toggles';
+      toggles.appendChild(makeTogglePair(
+        [['top', '↑ Top'], ['bottom', '↓ Bottom']],
+        feat.lengthRef,
+        (v) => { holeState[segKey][featIdx].lengthRef = v; renderHoles(); }
+      ));
+      toggles.appendChild(makeTogglePair(
+        [['left', '← Left'], ['right', '→ Right']],
+        feat.widthRef,
+        (v) => { holeState[segKey][featIdx].widthRef = v; renderHoles(); }
+      ));
+      body.appendChild(toggles);
+
+      const lengthLabel = feat.lengthRef === 'top' ? 'From top (mm)' : 'From bottom (mm)';
+      const widthLabel = feat.widthRef === 'left' ? 'From left (mm)' : 'From right (mm)';
+      const headers = document.createElement('div');
+      headers.className = 'pos-col-headers';
+      headers.innerHTML = `<span>${lengthLabel}</span><span>${widthLabel}</span><span></span><span></span>`;
+      body.appendChild(headers);
+
       const posList = document.createElement('div');
       posList.className = 'position-list';
       feat.positions.forEach((pos, pi) => {
         const posRow = document.createElement('div');
         posRow.className = 'position-row';
-        posRow.innerHTML = `<input type="number" placeholder="from top" step="0.1" value="${pos.from_top}"><input type="number" placeholder="from left" step="0.1" value="${pos.from_left}">`;
+        posRow.innerHTML =
+          `<input type="number" placeholder="0" step="0.1"${posInputValueAttr(pos.length_val)}>` +
+          `<input type="number" placeholder="0" step="0.1"${posInputValueAttr(pos.width_val)}>`;
         const inputs = posRow.querySelectorAll('input');
-        inputs[0].onchange = () => { holeState[segKey][featIdx].positions[pi].from_top = parseFloat(inputs[0].value) || 0; };
-        inputs[1].onchange = () => { holeState[segKey][featIdx].positions[pi].from_left = parseFloat(inputs[1].value) || 0; };
+        const sync = () => {
+          holeState[segKey][featIdx].positions[pi].length_val = parseFloat(inputs[0].value) || 0;
+          holeState[segKey][featIdx].positions[pi].width_val = parseFloat(inputs[1].value) || 0;
+        };
+        inputs[0].addEventListener('input', sync);
+        inputs[0].addEventListener('change', sync);
+        inputs[1].addEventListener('input', sync);
+        inputs[1].addEventListener('change', sync);
+
         const addPos = document.createElement('button');
         addPos.type = 'button'; addPos.className = 'btn-icon add'; addPos.textContent = '+';
-        addPos.onclick = () => { holeState[segKey][featIdx].positions.push({ from_top: 0, from_left: 0 }); renderHoles(); };
+        addPos.onclick = () => {
+          holeState[segKey][featIdx].positions.push({ length_val: 0, width_val: 0 });
+          renderHoles();
+        };
         const removePos = document.createElement('button');
         removePos.type = 'button'; removePos.className = 'btn-icon'; removePos.textContent = '×';
         removePos.onclick = () => {
@@ -357,23 +496,39 @@ tr:last-child td { border-bottom: none; }
         posRow.appendChild(addPos); posRow.appendChild(removePos);
         posList.appendChild(posRow);
       });
+      body.appendChild(posList);
+
       const removeFeat = document.createElement('button');
       removeFeat.type = 'button'; removeFeat.className = 'btn-icon'; removeFeat.textContent = '×';
       removeFeat.onclick = () => { holeState[segKey].splice(featIdx, 1); renderHoles(); };
-      row.appendChild(letterSelect); row.appendChild(posList); row.appendChild(removeFeat);
+
+      row.appendChild(letterSelect);
+      row.appendChild(body);
+      row.appendChild(removeFeat);
       parent.appendChild(row);
     }
 
     function collectHolesBySegment() {
       const result = {};
+      const barW = parseFloat(document.getElementById('bar_width')?.value) || 0;
       for (let i = 1; i <= segmentCount; i++) {
         const key = String(i);
         const features = holeState[key] || [];
         if (!features.length) { result[key] = {}; continue; }
+        const segLen = parseFloat(document.getElementById(`seg_len_${i}`)?.value) || 0;
         const segObj = {};
         features.forEach(feat => {
           if (!segObj[feat.letter]) segObj[feat.letter] = [];
-          feat.positions.forEach(p => segObj[feat.letter].push([p.from_top, p.from_left]));
+          feat.positions.forEach(p => {
+            const length_val = parseFloat(p.length_val) || 0;
+            const width_val = parseFloat(p.width_val) || 0;
+            const converted = convertPosition(
+              length_val, width_val,
+              feat.lengthRef || 'top', feat.widthRef || 'left',
+              segLen, barW
+            );
+            segObj[feat.letter].push(converted);
+          });
         });
         result[key] = segObj;
       }
@@ -418,6 +573,124 @@ tr:last-child td { border-bottom: none; }
       }
     }
 
+    /* ── Calculator ── */
+    function updateCalcDisplay() {
+      document.getElementById('calc-display').textContent = calcExpression || '0';
+      document.getElementById('calc-paste').disabled = calcResult === null;
+    }
+
+    function appendCalc(token) {
+      calcResult = null;
+      calcExpression += token;
+      updateCalcDisplay();
+    }
+
+    function evalCalc() {
+      if (!calcExpression.trim()) return;
+      try {
+        let expr = calcExpression
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/−/g, '-');
+        for (let n = 0; n < 5; n++) {
+          const next = expr
+            .replace(/sin\(([^()]*)\)/g, (_, a) => `Math.sin((${a})*Math.PI/180)`)
+            .replace(/cos\(([^()]*)\)/g, (_, a) => `Math.cos((${a})*Math.PI/180)`)
+            .replace(/tan\(([^()]*)\)/g, (_, a) => `Math.tan((${a})*Math.PI/180)`);
+          if (next === expr) break;
+          expr = next;
+        }
+        if (/[^0-9+\-*/().,\s]|[a-zA-Z]/.test(expr.replace(/Math\.(sin|cos|tan|PI)/g, ''))) {
+          throw new Error('Invalid characters');
+        }
+        const result = Function('"use strict"; return (' + expr + ')')();
+        if (typeof result !== 'number' || !isFinite(result)) throw new Error('Bad result');
+        calcResult = Math.round(result * 10000) / 10000;
+        calcExpression = String(calcResult);
+        updateCalcDisplay();
+      } catch (e) {
+        calcResult = null;
+        calcExpression = '';
+        document.getElementById('calc-display').textContent = 'Error';
+        document.getElementById('calc-paste').disabled = true;
+      }
+    }
+
+    function buildCalculator() {
+      const grid = document.getElementById('calc-grid');
+      grid.innerHTML = '';
+      const layout = [
+        { t: 'sin', cls: 'trig', a: () => appendCalc('sin(') },
+        { t: 'cos', cls: 'trig', a: () => appendCalc('cos(') },
+        { t: 'tan', cls: 'trig', a: () => appendCalc('tan(') },
+        { t: '( )', a: () => {
+          const last = calcExpression.slice(-1);
+          if (!calcExpression || /[+\-*/÷×−(]/.test(last)) appendCalc('(');
+          else appendCalc(')');
+        }},
+        { t: '←', cls: 'backspace', a: () => { calcResult = null; calcExpression = calcExpression.slice(0, -1); updateCalcDisplay(); } },
+        { t: '7', a: () => appendCalc('7') },
+        { t: '8', a: () => appendCalc('8') },
+        { t: '9', a: () => appendCalc('9') },
+        { t: '÷', a: () => appendCalc('÷') },
+        { t: '4', a: () => appendCalc('4') },
+        { t: '5', a: () => appendCalc('5') },
+        { t: '6', a: () => appendCalc('6') },
+        { t: '×', a: () => appendCalc('×') },
+        { t: '1', a: () => appendCalc('1') },
+        { t: '2', a: () => appendCalc('2') },
+        { t: '3', a: () => appendCalc('3') },
+        { t: '−', a: () => appendCalc('−') },
+        { t: '0', a: () => appendCalc('0') },
+        { t: '.', a: () => appendCalc('.') },
+        { t: '=', cls: 'equals', a: evalCalc },
+        { t: '+', a: () => appendCalc('+') },
+      ];
+      const firstRow = document.createElement('div');
+      firstRow.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem;';
+      const rest = document.createElement('div');
+      rest.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;';
+      layout.slice(0, 5).forEach(b => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'calc-btn' + (b.cls ? ' ' + b.cls : '');
+        btn.textContent = b.t;
+        btn.onclick = b.a;
+        firstRow.appendChild(btn);
+      });
+      layout.slice(5).forEach(b => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'calc-btn' + (b.cls ? ' ' + b.cls : '');
+        btn.textContent = b.t;
+        btn.onclick = b.a;
+        rest.appendChild(btn);
+      });
+      grid.appendChild(firstRow);
+      grid.appendChild(rest);
+      updateCalcDisplay();
+    }
+
+    document.getElementById('calc-toggle').addEventListener('click', () => {
+      document.getElementById('calc-panel').classList.toggle('open');
+    });
+    document.getElementById('calc-close').addEventListener('click', () => {
+      document.getElementById('calc-panel').classList.remove('open');
+    });
+    document.getElementById('calc-paste').addEventListener('click', () => {
+      if (lastFocusedInput == null || calcResult === null) return;
+      lastFocusedInput.value = calcResult;
+      lastFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+      lastFocusedInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    document.getElementById('form-root').addEventListener('focusin', (e) => {
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT') && (t.type === 'number' || t.type === 'text') && t.id !== 'calc-display') {
+        lastFocusedInput = t;
+      }
+    });
+
     document.getElementById('update-segments').addEventListener('click', () => {
       segmentCount = Math.max(1, parseInt(document.getElementById('num_segments').value, 10) || 1);
       document.getElementById('num_segments').value = segmentCount;
@@ -439,6 +712,10 @@ tr:last-child td { border-bottom: none; }
     for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
     renderSegments();
     updateFilenamePreview();
+    buildCalculator();
+
+    // Expose helpers for manual testing in console
+    window.__busbarTest = { convertPosition, collectHolesBySegment, get holeState() { return holeState; } };
   </script>
 </body>
 </html>
