@@ -160,6 +160,12 @@ tr:last-child td { border-bottom: none; }
   cursor: pointer; font-family: inherit;
 }
 #calc-paste:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Mode tabs ── */
+.tab-bar { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 0 2rem; display: flex; }
+.tab { padding: 0.65rem 1.5rem; font-size: 0.875rem; font-weight: 600; border: none; background: transparent; cursor: pointer; border-bottom: 3px solid transparent; color: #6B7A99; font-family: inherit; }
+.tab:hover { color: #1B2A4A; }
+.tab-active { border-bottom: 3px solid #3DCD58 !important; color: #1B2A4A !important; }
   </style>
 </head>
 <body>
@@ -170,7 +176,13 @@ tr:last-child td { border-bottom: none; }
   <span class="topbar-label">Busbar Generator</span>
 </div>
 
+<div class="tab-bar">
+  <button type="button" class="tab tab-active" id="tab-form">Form</button>
+  <button type="button" class="tab" id="tab-direct">Direct Input</button>
+</div>
+
 <div class="page" id="form-root">
+<div id="form-sections">
   <!-- Section 1: Bar Dimensions -->
   <div class="section">
     <div class="section-title">Bar dimensions</div>
@@ -266,6 +278,31 @@ tr:last-child td { border-bottom: none; }
     <div id="holes-container"></div>
     <div class="holes-ref-horizontal" id="holes-ref-panel">Add photo to frontend/assets/hole_positions.png</div>
   </div>
+</div><!-- /form-sections -->
+
+<div id="direct-input-panel" style="display:none">
+  <div class="section">
+    <div class="section-title">Direct input</div>
+    <p class="helper" style="margin-bottom:0.75rem">
+      Paste your Python input block directly. Click Parse to populate the form,
+      then switch to Form tab to review and edit before generating.
+    </p>
+    <textarea id="direct-input-textarea"
+      placeholder="Paste your BAR_THICKNESS = ... block here"
+      rows="24"
+      style="width:100%; font-family:'Courier New',monospace; font-size:0.85rem;
+             background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px;
+             padding:0.75rem; color:#1B2A4A; resize:vertical; line-height:1.6;"></textarea>
+    <div id="direct-input-error" style="display:none; margin-top:0.5rem;
+      padding:0.65rem 0.85rem; background:#FEF2F2; border:1px solid #FECACA;
+      border-radius:6px; color:#DC2626; font-size:0.82rem;"></div>
+    <div style="display:flex; gap:0.75rem; margin-top:0.75rem; align-items:center; flex-wrap:wrap;">
+      <button type="button" id="parse-btn" class="btn btn-accent">Parse + populate form</button>
+      <button type="button" id="parse-generate-btn" class="btn" style="background:#1B2A4A;color:#fff;">Parse + Generate</button>
+      <span id="parse-success" style="display:none; color:#16a34a; font-size:0.82rem; font-weight:600;">✓ Parsed successfully</span>
+    </div>
+  </div>
+</div>
 
   <!-- Generate -->
   <div class="generate-wrap">
@@ -290,11 +327,14 @@ tr:last-child td { border-bottom: none; }
 
   <script>
     const FEATURE_LETTERS = ['a','b','c','d','e','f','g','h','i','j','k'];
+    const STORAGE_KEY = 'busbar_form_state';
     let segmentCount = 4;
     let holeState = {};
     let calcExpression = '';
     let calcResult = null;
     let lastFocusedInput = null;
+    let activeMode = 'form'; // 'form' | 'direct'
+    let saveDebounceTimer = null;
 
     function tryLoadRef(panelId, assetPath, fallbackText) {
       const panel = document.getElementById(panelId);
@@ -560,6 +600,7 @@ tr:last-child td { border-bottom: none; }
       const btn = document.getElementById('generate-btn');
       spinner.classList.add('active'); errorMsg.classList.remove('active'); btn.disabled = true;
       try {
+        saveFormState();
         const payload = collectPayload();
         const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const data = await res.json();
@@ -568,8 +609,284 @@ tr:last-child td { border-bottom: none; }
         window.location.href = `/viewer?file=${encodeURIComponent(stlFilename)}`;
       } catch (err) {
         errorMsg.textContent = err.message; errorMsg.classList.add('active');
+        if (activeMode === 'direct') {
+          const diErr = document.getElementById('direct-input-error');
+          if (diErr) { diErr.style.display = 'block'; diErr.textContent = err.message; }
+        }
       } finally {
         spinner.classList.remove('active'); btn.disabled = false;
+      }
+    }
+
+    function setMode(mode) {
+      activeMode = mode;
+      const formSections = document.getElementById('form-sections');
+      const directPanel = document.getElementById('direct-input-panel');
+      const generateWrap = document.querySelector('.generate-wrap');
+      const tabForm = document.getElementById('tab-form');
+      const tabDirect = document.getElementById('tab-direct');
+
+      if (mode === 'form') {
+        formSections.style.display = '';
+        directPanel.style.display = 'none';
+        generateWrap.style.display = '';
+        tabForm.classList.add('tab-active');
+        tabDirect.classList.remove('tab-active');
+      } else {
+        formSections.style.display = 'none';
+        directPanel.style.display = '';
+        generateWrap.style.display = 'none';
+        tabForm.classList.remove('tab-active');
+        tabDirect.classList.add('tab-active');
+      }
+      saveFormState();
+    }
+
+    function parseHolesBySegment(text) {
+      const result = {};
+      const blockMatch = text.match(/HOLES_BY_SEGMENT\s*=\s*\{([\s\S]*?)\n\}/);
+      if (!blockMatch) return result;
+
+      const block = blockMatch[1];
+      const segRegex = /(\d+)\s*:\s*\{([\s\S]*?)\},?\s*(?=\d+\s*:|$)/g;
+      let segMatch;
+      while ((segMatch = segRegex.exec(block)) !== null) {
+        const segNum = String(parseInt(segMatch[1], 10));
+        const segBody = segMatch[2];
+        result[segNum] = {};
+        const featRegex = /"([a-zA-Z])"\s*:\s*\[([\s\S]*?)\],?/g;
+        let featMatch;
+        while ((featMatch = featRegex.exec(segBody)) !== null) {
+          const letter = featMatch[1];
+          const posBody = featMatch[2];
+          const tupleRegex = /\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/g;
+          const positions = [];
+          let tupleMatch;
+          while ((tupleMatch = tupleRegex.exec(posBody)) !== null) {
+            positions.push([parseFloat(tupleMatch[1]), parseFloat(tupleMatch[2])]);
+          }
+          if (positions.length > 0) result[segNum][letter] = positions;
+        }
+      }
+      return result;
+    }
+
+    function parseCorrectionRules(text) {
+      const m = text.match(/LENGTH_CORRECTION_RULES\s*=\s*(None|\{[\s\S]*?\n\})/);
+      if (!m || m[1].trim() === 'None') return null;
+      try {
+        const rulesBlock = m[1];
+        const rules = {};
+        const segRegex = /(\d+)\s*:\s*\{([^}]+)\}/g;
+        let sm;
+        while ((sm = segRegex.exec(rulesBlock)) !== null) {
+          const seg = parseInt(sm[1], 10);
+          const body = sm[2];
+          const startM = body.match(/"start"\s*:\s*("([^"]+)"|None)/);
+          const endM = body.match(/"end"\s*:\s*("([^"]+)"|None)/);
+          rules[seg] = {
+            start: startM ? (startM[2] || null) : null,
+            end: endM ? (endM[2] || null) : null,
+          };
+        }
+        return rules;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function parseDirectInput(text) {
+      const result = {};
+      const errors = [];
+
+      function extractFloat(name, key) {
+        const m = text.match(new RegExp(`^${name}\\s*=\\s*([\\d.\\-]+)`, 'm'));
+        if (m) result[key] = parseFloat(m[1]);
+        else errors.push(`Missing: ${name}`);
+      }
+
+      function extractString(name, key) {
+        const m = text.match(new RegExp(`^${name}\\s*=\\s*["']([^"']+)["']`, 'm'));
+        if (m) result[key] = m[1];
+        else errors.push(`Missing: ${name}`);
+      }
+
+      function extractList(name, key) {
+        const m = text.match(new RegExp(`^${name}\\s*=\\s*\\[([^\\]]+)\\]`, 'm'));
+        if (m) {
+          result[key] = m[1].split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+        } else {
+          errors.push(`Missing: ${name}`);
+        }
+      }
+
+      extractFloat('BAR_THICKNESS', 'bar_thickness');
+      extractFloat('BAR_WIDTH', 'bar_width');
+      extractFloat('BEND_RADIUS', 'bend_radius');
+      extractList('DRAWING_LENGTHS', 'drawing_lengths');
+      extractList('BEND_ANGLES', 'bend_angles');
+      extractString('LENGTH_REFERENCE', 'length_reference');
+      extractString('filename', 'filename');
+      extractFloat('Customcircledim', 'custom_circle_dim');
+      extractFloat('Customcircledim2', 'custom_circle_dim2');
+      extractFloat('Customslotwidth', 'custom_slot_width');
+      extractFloat('Customslotlength', 'custom_slot_length');
+
+      result.holes_by_segment = parseHolesBySegment(text);
+      result.length_correction_rules = parseCorrectionRules(text);
+
+      if (errors.length > 0) throw errors.join('\n');
+      return result;
+    }
+
+    function populateFormFromParsed(parsed) {
+      if (parsed.bar_thickness != null) document.getElementById('bar_thickness').value = parsed.bar_thickness;
+      if (parsed.bar_width != null) document.getElementById('bar_width').value = parsed.bar_width;
+      if (parsed.bend_radius != null) document.getElementById('bend_radius').value = parsed.bend_radius;
+      if (parsed.filename) { document.getElementById('filename').value = parsed.filename; updateFilenamePreview(); }
+      if (parsed.length_reference) document.getElementById('length_reference').value = parsed.length_reference;
+      if (parsed.custom_circle_dim != null) document.getElementById('custom_circle_dim').value = parsed.custom_circle_dim;
+      if (parsed.custom_circle_dim2 != null) document.getElementById('custom_circle_dim2').value = parsed.custom_circle_dim2;
+      if (parsed.custom_slot_width != null) document.getElementById('custom_slot_width').value = parsed.custom_slot_width;
+      if (parsed.custom_slot_length != null) document.getElementById('custom_slot_length').value = parsed.custom_slot_length;
+
+      if (parsed.drawing_lengths?.length) {
+        segmentCount = parsed.drawing_lengths.length;
+        document.getElementById('num_segments').value = segmentCount;
+        // Clear holeState then set segment count before render
+        holeState = {};
+        for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
+        renderSegments();
+        parsed.drawing_lengths.forEach((len, i) => {
+          const el = document.getElementById(`seg_len_${i + 1}`);
+          if (el) el.value = len;
+        });
+        parsed.bend_angles?.forEach((angle, i) => {
+          const el = document.getElementById(`bend_angle_${i + 1}`);
+          if (el) el.value = angle;
+        });
+        // Refresh hole panel headers with new lengths
+        parsed.drawing_lengths.forEach((len, i) => {
+          const header = document.getElementById(`hole-header-${i + 1}`);
+          if (header) header.textContent = `Segment ${i + 1} — ${len} mm`;
+        });
+      }
+
+      if (parsed.holes_by_segment) {
+        for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
+        Object.entries(parsed.holes_by_segment).forEach(([segStr, featDict]) => {
+          const key = segStr;
+          if (!holeState[key]) holeState[key] = [];
+          Object.entries(featDict).forEach(([letter, positions]) => {
+            holeState[key].push({
+              letter,
+              lengthRef: 'top',
+              widthRef: 'left',
+              positions: positions.map(p => ({ length_val: p[0], width_val: p[1] }))
+            });
+          });
+        });
+        renderHoles();
+      }
+    }
+
+    function saveFormState() {
+      try {
+        const state = {
+          bar_thickness: document.getElementById('bar_thickness').value,
+          bar_width: document.getElementById('bar_width').value,
+          bend_radius: document.getElementById('bend_radius').value,
+          filename: document.getElementById('filename').value,
+          length_reference: document.getElementById('length_reference').value,
+          custom_circle_dim: document.getElementById('custom_circle_dim').value,
+          custom_circle_dim2: document.getElementById('custom_circle_dim2').value,
+          custom_slot_width: document.getElementById('custom_slot_width').value,
+          custom_slot_length: document.getElementById('custom_slot_length').value,
+          num_segments: segmentCount,
+          segment_lengths: getSegmentLengths(),
+          bend_angles: (() => {
+            const angles = [];
+            for (let i = 1; i < segmentCount; i++) {
+              const el = document.getElementById(`bend_angle_${i}`);
+              angles.push(el ? parseFloat(el.value) || 0 : 0);
+            }
+            return angles;
+          })(),
+          hole_state: JSON.parse(JSON.stringify(holeState)),
+          direct_input_text: document.getElementById('direct-input-textarea')?.value || '',
+          active_mode: activeMode,
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { /* silent fail */ }
+    }
+
+    function scheduleSaveFormState() {
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(saveFormState, 300);
+    }
+
+    function restoreFormState() {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+
+        if (state.bar_thickness) document.getElementById('bar_thickness').value = state.bar_thickness;
+        if (state.bar_width) document.getElementById('bar_width').value = state.bar_width;
+        if (state.bend_radius) document.getElementById('bend_radius').value = state.bend_radius;
+        if (state.filename) document.getElementById('filename').value = state.filename;
+        if (state.length_reference) document.getElementById('length_reference').value = state.length_reference;
+        if (state.custom_circle_dim) document.getElementById('custom_circle_dim').value = state.custom_circle_dim;
+        if (state.custom_circle_dim2 != null) document.getElementById('custom_circle_dim2').value = state.custom_circle_dim2;
+        if (state.custom_slot_width) document.getElementById('custom_slot_width').value = state.custom_slot_width;
+        if (state.custom_slot_length) document.getElementById('custom_slot_length').value = state.custom_slot_length;
+
+        if (state.num_segments) {
+          segmentCount = parseInt(state.num_segments, 10) || 4;
+          document.getElementById('num_segments').value = segmentCount;
+        }
+
+        if (state.hole_state) {
+          Object.keys(holeState).forEach(k => delete holeState[k]);
+          Object.assign(holeState, state.hole_state);
+        }
+
+        if (state.segment_lengths) {
+          window._pendingSegLengths = state.segment_lengths;
+        }
+        if (state.bend_angles) {
+          window._pendingBendAngles = state.bend_angles;
+        }
+
+        if (state.direct_input_text) {
+          const ta = document.getElementById('direct-input-textarea');
+          if (ta) ta.value = state.direct_input_text;
+        }
+
+        if (state.active_mode) setMode(state.active_mode);
+
+      } catch (e) { /* silent fail — bad stored state, start fresh */ }
+    }
+
+    function handleParse(thenGenerate) {
+      const ta = document.getElementById('direct-input-textarea');
+      const errEl = document.getElementById('direct-input-error');
+      const okEl = document.getElementById('parse-success');
+      errEl.style.display = 'none';
+      okEl.style.display = 'none';
+      try {
+        const parsed = parseDirectInput(ta.value);
+        populateFormFromParsed(parsed);
+        okEl.style.display = 'inline';
+        saveFormState();
+        if (thenGenerate) {
+          generate();
+        } else {
+          setMode('form');
+        }
+      } catch (e) {
+        errEl.style.display = 'block';
+        errEl.textContent = typeof e === 'string' ? e : (e.message || String(e));
       }
     }
 
@@ -691,11 +1008,27 @@ tr:last-child td { border-bottom: none; }
       }
     });
 
-    document.getElementById('update-segments').addEventListener('click', () => {
+    function updateSegmentCount() {
       segmentCount = Math.max(1, parseInt(document.getElementById('num_segments').value, 10) || 1);
       document.getElementById('num_segments').value = segmentCount;
       renderSegments();
+    }
+    document.getElementById('update-segments').addEventListener('click', updateSegmentCount);
+    document.getElementById('num_segments').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        updateSegmentCount();
+      }
     });
+    document.getElementById('tab-form').addEventListener('click', () => setMode('form'));
+    document.getElementById('tab-direct').addEventListener('click', () => setMode('direct'));
+    document.getElementById('parse-btn').addEventListener('click', () => handleParse(false));
+    document.getElementById('parse-generate-btn').addEventListener('click', () => handleParse(true));
+
+    document.getElementById('form-root').addEventListener('input', scheduleSaveFormState);
+    document.getElementById('form-root').addEventListener('change', scheduleSaveFormState);
+    document.getElementById('direct-input-textarea').addEventListener('input', scheduleSaveFormState);
+
     document.getElementById('filename').addEventListener('input', updateFilenamePreview);
     document.getElementById('generate-btn').addEventListener('click', generate);
     document.getElementById('segments-container').addEventListener('input', (e) => {
@@ -710,12 +1043,38 @@ tr:last-child td { border-bottom: none; }
     tryLoadRef('feature-ref-panel', '/static/assets/feature_types.png', 'Feature type reference — add photo to frontend/assets/feature_types.png');
     tryLoadRef('holes-ref-panel', '/static/assets/hole_positions.png', 'Hole position reference — add photo to frontend/assets/hole_positions.png');
     for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
+    restoreFormState();
     renderSegments();
+    if (window._pendingSegLengths) {
+      window._pendingSegLengths.forEach((len, i) => {
+        const el = document.getElementById(`seg_len_${i + 1}`);
+        if (el) el.value = len;
+      });
+      delete window._pendingSegLengths;
+    }
+    if (window._pendingBendAngles) {
+      window._pendingBendAngles.forEach((angle, i) => {
+        const el = document.getElementById(`bend_angle_${i + 1}`);
+        if (el) el.value = angle;
+      });
+      delete window._pendingBendAngles;
+    }
+    // Refresh hole headers after restoring segment lengths
+    getSegmentLengths().forEach((len, i) => {
+      const header = document.getElementById(`hole-header-${i + 1}`);
+      if (header) header.textContent = `Segment ${i + 1} — ${len} mm`;
+    });
     updateFilenamePreview();
     buildCalculator();
 
     // Expose helpers for manual testing in console
-    window.__busbarTest = { convertPosition, collectHolesBySegment, get holeState() { return holeState; } };
+    window.__busbarTest = {
+      convertPosition,
+      collectHolesBySegment,
+      parseDirectInput,
+      populateFormFromParsed,
+      get holeState() { return holeState; },
+    };
   </script>
 </body>
 </html>
