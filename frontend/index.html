@@ -6,324 +6,438 @@
   <title>Busbar Generator — TAQANA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #F4F6F9; color: #1B2A4A; min-height: 100vh; line-height: 1.5; }
+body { font-family: 'Inter', sans-serif; background: #F8FAFC; color: #1E293B; min-height: 100vh; line-height: 1.5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-/* ── Top bar ── */
-.topbar { background: #fff; padding: 0.75rem 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 3px solid #3DCD58; }
-.topbar-logo { height: 56px; width: auto; }
-.topbar-divider { width: 1px; height: 40px; background: #E2E8F0; margin: 0 0.5rem; }
-.topbar-label { color: #6B7A99; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-
-/* ── Page ── */
-.page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
-.page-title { font-size: 1.4rem; font-weight: 700; color: #1B2A4A; margin-bottom: 0.2rem; }
-.page-sub { color: #6B7A99; font-size: 0.875rem; margin-bottom: 1.75rem; }
-
-/* ── Section cards ── */
-.section { background: #fff; border-radius: 10px; border: 1px solid #E2E8F0; padding: 1.5rem; margin-bottom: 1rem; }
-.section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #3DCD58; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #E2E8F0; }
-.section-with-ref { display: grid; grid-template-columns: 1fr 220px; gap: 1.25rem; align-items: start; }
-@media (max-width: 768px) { .section-with-ref { grid-template-columns: 1fr; } }
-
-/* ── Grid ── */
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.875rem; }
-@media (max-width: 640px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
-
-/* ── Form fields ── */
-label { display: block; font-size: 0.75rem; font-weight: 600; color: #6B7A99; margin-bottom: 0.3rem; letter-spacing: 0.02em; }
-input, select { width: 100%; padding: 0.5rem 0.75rem; background: #F8FAFC; color: #1B2A4A; border: 1px solid #CBD5E1; border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
-input:focus, select:focus { outline: none; border-color: #3DCD58; background: #fff; }
-.helper { font-size: 0.75rem; color: #94A3B8; margin-top: 0.3rem; }
+/* ── Spinner removal ── */
 input[type=number] { -moz-appearance: textfield; }
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* ── Reference panel ── */
-.ref-panel { border: 1.5px dashed #CBD5E1; border-radius: 8px; min-height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0.75rem; font-size: 0.72rem; color: #94A3B8; background: #F8FAFC; line-height: 1.5; gap: 0.4rem; }
-.ref-panel img { max-width: 100%; max-height: 180px; border-radius: 6px; }
+/* ── Header ── */
+.topbar { background: #fff; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; gap: 0.875rem; border-bottom: 1px solid #F1F5F9; flex-shrink: 0; }
+.topbar-logo { height: 32px; width: auto; }
+.topbar-divider { width: 1px; height: 28px; background: #E2E8F0; margin: 0 0.25rem; }
+.topbar-label { color: #64748B; font-size: 13px; font-weight: 400; }
+.logo-fallback { display: flex; flex-direction: column; gap: 1px; }
+.logo-fallback .logo-name { color: #1E293B; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; }
+.logo-fallback .logo-sub { color: #2D7A4F; font-size: 9px; font-weight: 600; letter-spacing: 0.14em; }
 
-/* ── Segment / bend row ── */
-.segment-controls { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
-.segment-controls .field { max-width: 180px; }
-.segments-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
-.segment-field, .bend-field { min-width: 100px; }
-.bend-arrow { color: #3DCD58; font-weight: 700; padding-bottom: 0.55rem; font-size: 1rem; }
+/* ── Tabs ── */
+.tab-bar { background: #fff; padding: 0 1.5rem; display: flex; border-bottom: 1px solid #E2E8F0; flex-shrink: 0; }
+.tab { padding: 0.6rem 0; margin-right: 1.75rem; font-size: 12px; font-weight: 500; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; color: #94A3B8; font-family: inherit; letter-spacing: 0.01em; transition: color 0.15s; }
+.tab:hover:not(.tab-active) { color: #475569; }
+.tab-active { border-bottom: 2px solid #2D7A4F !important; color: #1E293B !important; font-weight: 600; }
 
-/* ── Buttons ── */
-.btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; font-family: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-.btn:hover { opacity: 0.9; }
-.btn-secondary { background: #fff; color: #1B2A4A; border: 1px solid #CBD5E1; }
-.btn-secondary:hover { border-color: #1B2A4A; }
-.btn-accent { background: #3DCD58; color: #fff; }
-.btn-small { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+/* ── Workspace ── */
+.workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* ── Left panel ── */
+.left-panel { overflow-y: auto; flex-shrink: 0; background: #F8FAFC; padding: 1.25rem; display: flex; flex-direction: column; gap: 0; transition: width 0.2s ease; }
+.left-panel::-webkit-scrollbar { width: 4px; }
+.left-panel::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 2px; }
+.left-panel.full-width { width: 100% !important; }
+.left-panel.minimised { width: 0 !important; padding: 0 !important; overflow: hidden; }
+
+/* ── Unified canvas ── */
+.canvas { background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; }
+
+/* ── Zone ── */
+.zone { padding: 1rem 1.25rem; border-bottom: 1px solid #E2E8F0; }
+.zone:last-child { border-bottom: none; }
+.zone-title { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #94A3B8; margin-bottom: 0.875rem; }
+.zone-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.875rem; }
+.zone-title-row .zone-title { margin-bottom: 0; }
+
+/* ── Grids ── */
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+
+/* ── Fields ── */
+label { display: block; font-size: 10px; font-weight: 600; color: #64748B; margin-bottom: 3px; letter-spacing: 0.02em; }
+input, select { width: 100%; padding: 0.32rem 0.5rem; font-family: 'Inter', sans-serif; font-size: 12px; background: #FAFBFC; border: 1px solid #CBD5E1; border-radius: 5px; color: #1E293B; transition: border-color 0.15s, background 0.15s; }
+input:focus, select:focus { outline: none; border-color: #2D7A4F; background: #fff; }
+input::placeholder { color: #94A3B8; }
+.helper { font-size: 10px; color: #94A3B8; margin-top: 0.3rem; }
+
+/* ── Filename + ref inline ── */
+.filename-ref-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; align-items: end; }
+
+/* ── Segment number inline control ── */
+.seg-count-inline { display: flex; align-items: center; gap: 0.4rem; }
+.seg-count-inline label { margin-bottom: 0; white-space: nowrap; }
+.seg-count-inline input { width: 44px; text-align: center; }
+.btn-update { padding: 0.28rem 0.55rem; font-size: 10px; font-weight: 600; border: 1px solid #CBD5E1; border-radius: 4px; background: #FAFBFC; color: #1E293B; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.btn-update:hover { border-color: #2D7A4F; color: #2D7A4F; }
+
+/* ── Segment flow ── */
+.seg-flow { display: flex; align-items: flex-end; gap: 0; overflow-x: auto; padding-bottom: 2px; }
+.seg-flow::-webkit-scrollbar { height: 3px; }
+.seg-flow::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 2px; }
+.seg-block { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.seg-block label { text-align: center; font-size: 9px; color: #94A3B8; }
+.seg-block input { width: 58px; text-align: center; font-variant-numeric: tabular-nums; }
+.bend-block { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.bend-block label { text-align: center; font-size: 9px; color: #2D7A4F; }
+.bend-block input { width: 50px; text-align: center; background: #F0F9F4; border-color: #A7D4B8; font-variant-numeric: tabular-nums; }
+.bend-block input:focus { border-color: #2D7A4F; background: #fff; }
+.seg-connector { display: flex; align-items: center; padding: 0 3px; padding-bottom: 3px; flex-shrink: 0; }
+.seg-connector-line { width: 8px; height: 1px; background: #CBD5E1; }
+.seg-connector-arrow { color: #94A3B8; font-size: 10px; }
+.seg-hint { font-size: 9px; color: #94A3B8; margin-top: 0.5rem; }
+
+/* ── Diagram collapse bar ── */
+.diagram-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.32rem 0.55rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 5px; cursor: pointer; margin-top: 0.65rem; user-select: none; }
+.diagram-bar:hover { border-color: #CBD5E1; }
+.diagram-bar span { font-size: 10px; color: #94A3B8; display: flex; align-items: center; gap: 0.3rem; }
+.diagram-bar .chevron { font-size: 11px; color: #CBD5E1; transition: transform 0.2s; }
+.diagram-bar.open .chevron { transform: rotate(90deg); }
+.diagram-expanded { margin-top: 0.5rem; }
+.diagram-expanded img { width: 100%; border-radius: 6px; border: 1px solid #E2E8F0; }
 
 /* ── Feature table ── */
-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.75rem; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0; }
-th, td { padding: 0.45rem 0.75rem; text-align: left; border-bottom: 1px solid #E2E8F0; }
-th { background: #F1F5F9; font-weight: 700; color: #6B7A99; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
-tr:last-child td { border-bottom: none; }
+.feature-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 0.65rem; border-radius: 6px; overflow: hidden; border: 1px solid #E2E8F0; }
+.feature-table th { background: #F8FAFC; font-weight: 600; color: #64748B; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.6rem; text-align: left; border-bottom: 1px solid #E2E8F0; }
+.feature-table td { padding: 0.32rem 0.6rem; border-bottom: 1px solid #E2E8F0; color: #1E293B; }
+.feature-table tr:last-child td { border-bottom: none; }
 
 /* ── Hole panels ── */
-.hole-panel { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem; margin-bottom: 0.6rem; }
-.hole-panel-header { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.75rem; color: #1B2A4A; }
+.hole-panel { background: #F8FAFC; border-radius: 6px; padding: 0.65rem 0.75rem; margin-bottom: 0.4rem; }
+.hole-panel:last-of-type { margin-bottom: 0; }
+.hole-panel-header { font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; }
+.feature-col-headers { display: grid; grid-template-columns: 62px 1fr 1fr 20px 20px; gap: 0.25rem; margin-bottom: 0.22rem; }
+.feature-col-headers .col-label { font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+.pos-col-headers { display: grid; grid-template-columns: 1fr 1fr 20px 20px; gap: 0.28rem; margin-bottom: 0.2rem; }
+.pos-col-headers span { font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
+.feature-row { display: grid; grid-template-columns: 62px 1fr auto; gap: 0.4rem; align-items: start; margin-bottom: 0.4rem; }
+.position-list { display: flex; flex-direction: column; gap: 0.28rem; }
+.position-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 0.28rem; align-items: center; }
+.position-row input { font-size: 11px; padding: 0.28rem 0.35rem; text-align: center; }
+.btn-icon { background: #fff; border: 1px solid #E2E8F0; color: #94A3B8; width: 20px; height: 20px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-size: 11px; }
+.btn-icon.add { border-color: #A7D4B8; color: #2D7A4F; }
+.btn-add-feature { display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.22rem 0.5rem; font-size: 10px; font-weight: 500; border: 1px solid #E2E8F0; border-radius: 4px; color: #64748B; background: #fff; cursor: pointer; font-family: inherit; margin-top: 0.25rem; }
+.btn-add-feature:hover { border-color: #2D7A4F; color: #2D7A4F; }
+.holes-ref-bar { border: 1px dashed #E2E8F0; border-radius: 5px; padding: 0.5rem 0.75rem; font-size: 10px; color: #94A3B8; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; cursor: pointer; background: #F8FAFC; }
 
-/* ── Feature rows ── */
-.feature-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 0.5rem; align-items: start; margin-bottom: 0.75rem; }
-.feature-body { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-.pos-toggles { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.toggle-pair { display: inline-flex; }
-.toggle-btn { font-size: 0.72rem; padding: 0.3rem 0.6rem; cursor: pointer; border: 1px solid #CBD5E1; background: #fff; color: #6B7A99; font-family: inherit; font-weight: 600; }
-.toggle-btn:first-child { border-radius: 4px 0 0 4px; }
-.toggle-btn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
-.toggle-btn.active { background: #1B2A4A; color: #fff; border-color: #1B2A4A; }
-.toggle-btn.active + .toggle-btn { border-left-color: #1B2A4A; }
-.pos-col-headers { display: grid; grid-template-columns: 1fr 1fr 28px 28px; gap: 0.35rem; }
-.pos-col-headers span { font-size: 0.68rem; font-weight: 700; color: #6B7A99; text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
-.position-list { display: flex; flex-direction: column; gap: 0.35rem; }
-.position-row { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 0.35rem; align-items: center; }
-.position-row input { font-size: 0.85rem; padding: 0.4rem 0.5rem; text-align: center; }
-.btn-icon { background: #fff; border: 1px solid #CBD5E1; color: #1B2A4A; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
-.btn-icon.add { border-color: #3DCD58; color: #3DCD58; }
+/* ── Position toggles ── */
+.pos-toggles { display: flex; gap: 0.4rem; margin-bottom: 0.35rem; }
+.toggle-pair { display: flex; }
+.tgl { padding: 0.22rem 0.5rem; font-size: 9px; font-weight: 600; border: 1px solid #E2E8F0; background: #fff; color: #94A3B8; cursor: pointer; font-family: inherit; }
+.tgl:first-child { border-radius: 4px 0 0 4px; border-right: none; }
+.tgl:last-child { border-radius: 0 4px 4px 0; }
+.tgl.tgl-active { background: #1E293B; color: #fff; border-color: #1E293B; }
 
-/* ── Holes ref panel (horizontal) ── */
-.holes-ref-horizontal { border: 1.5px dashed #CBD5E1; border-radius: 8px; min-height: 56px; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; font-size: 0.72rem; color: #94A3B8; background: #F8FAFC; margin-top: 0.5rem; }
-.holes-ref-horizontal img { max-height: 80px; border-radius: 6px; }
+/* ── Divider ── */
+.panel-divider { width: 5px; background: #F1F5F9; cursor: col-resize; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.panel-divider:hover, .panel-divider.dragging { background: #E2E8F0; }
+.panel-divider-handle { width: 2px; height: 28px; background: #CBD5E1; border-radius: 2px; }
 
-/* ── Generate button ── */
-.generate-wrap { margin-top: 1.5rem; }
-.btn-generate { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 700; border-radius: 8px; background: #1B2A4A; color: #fff; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-.btn-generate .accent { color: #3DCD58; }
-.btn-generate:hover { background: #253d6b; }
-.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
+/* ── Minimise bar ── */
+.minimise-bar { width: 16px; background: #1E293B; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; border-right: 2px solid #2D7A4F; }
+.minimise-bar span { color: rgba(255,255,255,0.7); font-size: 10px; writing-mode: vertical-rl; letter-spacing: 0.04em; user-select: none; }
+.minimise-bar:hover span { color: #fff; }
 
-/* ── Spinner / error ── */
-.spinner { display: none; text-align: center; margin-top: 1rem; color: #3DCD58; font-size: 0.9rem; }
+/* ── Right viewer panel ── */
+.right-panel { flex: 1; display: flex; flex-direction: column; background: #0F1117; min-width: 0; position: relative; }
+.right-panel.hidden { display: none; }
+.viewer-topbar { height: 44px; background: rgba(255,255,255,0.035); display: flex; align-items: center; padding: 0 1rem; gap: 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
+.viewer-filename { color: rgba(255,255,255,0.55); font-size: 11px; font-weight: 400; flex: 1; font-family: 'Inter', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-canvas { flex: 1; display: flex; align-items: center; justify-content: center; }
+.viewer-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; color: rgba(255,255,255,0.1); }
+.viewer-placeholder .icon { font-size: 40px; }
+.viewer-placeholder span { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+.viewer-footer { height: 32px; background: rgba(0,0,0,0.35); display: flex; align-items: center; padding: 0 1rem; justify-content: space-between; flex-shrink: 0; }
+.viewer-hint { font-size: 9px; color: rgba(255,255,255,0.22); letter-spacing: 0.05em; }
+.btn-viewer-dl { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; padding: 0.26rem 0.65rem; font-size: 10px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 0.3rem; }
+.btn-viewer-dl:hover { background: rgba(255,255,255,0.1); }
+.btn-viewer-expand { background: transparent; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 0.22rem 0.5rem; font-size: 9px; cursor: pointer; font-family: inherit; }
+.btn-viewer-expand:hover { color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.2); }
+
+/* ── Floating Update Preview button ── */
+.btn-float-preview { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100; background: #2D7A4F; color: #fff; border: none; border-radius: 7px; padding: 0.55rem 1rem; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 0.4rem; box-shadow: 0 2px 16px rgba(45,122,79,0.4); transition: background 0.15s, box-shadow 0.15s; }
+.btn-float-preview:hover { background: #235f3d; box-shadow: 0 4px 20px rgba(45,122,79,0.5); }
+.btn-float-preview.loading { background: #1E293B; cursor: not-allowed; }
+.btn-float-preview:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* ── Spinner + error ── */
+.spinner { display: none; font-size: 11px; color: #2D7A4F; text-align: center; padding: 0.5rem; }
 .spinner.active { display: block; }
-.error-msg { display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 6px; color: #DC2626; font-size: 0.875rem; }
+.error-msg { display: none; margin-top: 0.5rem; padding: 0.6rem 0.75rem; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 5px; color: #DC2626; font-size: 11px; }
 .error-msg.active { display: block; }
 
-/* ── Length reference options ── */
-.ref-options { list-style: none; margin-top: 0.75rem; }
-.ref-options li { font-size: 0.8rem; color: #6B7A99; margin-bottom: 0.3rem; padding-left: 0.9rem; position: relative; }
-.ref-options li::before { content: "•"; position: absolute; left: 0; color: #3DCD58; }
-.ref-options li strong { color: #1B2A4A; }
+/* ── Direct input mode ── */
+#direct-input-panel { padding: 1.25rem; }
+#direct-input-panel .canvas { padding: 1.25rem; }
+#direct-input-textarea { width: 100%; font-family: 'Courier New', monospace; font-size: 12px; background: #FAFBFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.75rem; color: #1E293B; resize: vertical; line-height: 1.7; }
+#direct-input-textarea:focus { outline: none; border-color: #2D7A4F; }
+#direct-input-error { display: none; margin-top: 0.5rem; padding: 0.6rem 0.75rem; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 5px; color: #DC2626; font-size: 11px; }
+#parse-success { display: none; color: #16a34a; font-size: 11px; font-weight: 600; }
+.parse-actions { display: flex; gap: 0.65rem; margin-top: 0.75rem; align-items: center; flex-wrap: wrap; }
+.btn-parse { padding: 0.45rem 0.875rem; border-radius: 5px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; border: none; }
+.btn-parse-primary { background: #2D7A4F; color: #fff; }
+.btn-parse-secondary { background: #1E293B; color: #fff; }
+.btn-parse-primary:hover { background: #235f3d; }
+.btn-parse-secondary:hover { background: #334155; }
 
-/* ── Floating calculator ── */
-#calc-toggle {
-  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100;
-  background: #1B2A4A; color: #fff; border: none; border-radius: 8px;
-  padding: 0.5rem 0.9rem; font-size: 0.85rem; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-}
-#calc-panel {
-  position: fixed; bottom: 5rem; right: 1.5rem; z-index: 100;
-  width: 280px; background: #fff; border: 1px solid #E2E8F0;
-  border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  display: none; overflow: hidden;
-}
-#calc-panel.open { display: block; }
-.calc-header {
-  background: #1B2A4A; color: #fff; padding: 0.65rem 0.85rem;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 0.85rem; font-weight: 700; border-bottom: 3px solid #3DCD58;
-}
-#calc-close {
-  background: transparent; border: none; color: #fff; font-size: 1.1rem;
-  cursor: pointer; line-height: 1; padding: 0 0.2rem;
-}
-#calc-display {
-  padding: 0.75rem 0.85rem; text-align: right; min-height: 40px;
-  font-size: 1.05rem; font-weight: 600; color: #1B2A4A;
-  background: #F8FAFC; border-bottom: 1px solid #E2E8F0;
-  word-break: break-all;
-}
-.calc-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;
-  padding: 0.65rem;
-}
-.calc-btn {
-  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;
-  font-size: 0.9rem; padding: 0.55rem; width: 100%; cursor: pointer;
-  font-family: inherit; color: #1B2A4A;
-}
-.calc-btn.trig { font-weight: 600; color: #1B2A4A; }
-.calc-btn.equals { background: #1B2A4A; color: #fff; border-color: #1B2A4A; }
-.calc-btn.backspace { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
-#calc-paste {
-  display: block; width: calc(100% - 1.3rem); margin: 0 0.65rem 0.65rem;
-  background: #3DCD58; color: #fff; border: none; border-radius: 6px;
-  padding: 0.55rem; font-weight: 700; font-size: 0.85rem;
-  cursor: pointer; font-family: inherit;
-}
+/* ── Calculator ── */
+#calc-toggle { position: fixed; bottom: 5rem; right: 1.5rem; z-index: 100; background: #1E293B; color: #fff; border: none; border-radius: 7px; padding: 0.45rem 0.8rem; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+#calc-toggle:hover { background: #334155; }
+#calc-panel { position: fixed; bottom: 9rem; right: 1.5rem; z-index: 100; width: 280px; background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+.calc-header { background: #1E293B; color: #fff; padding: 0.6rem 0.875rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #2D7A4F; font-size: 12px; font-weight: 600; }
+.calc-close-btn { background: transparent; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 14px; padding: 0; }
+.calc-close-btn:hover { color: #fff; }
+#calc-display { padding: 0.6rem 0.875rem; font-size: 18px; font-weight: 400; text-align: right; min-height: 44px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; color: #1E293B; font-family: 'Courier New', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #E2E8F0; padding: 1px; }
+.calc-btn { background: #FAFBFC; border: none; padding: 0.55rem; font-size: 13px; cursor: pointer; font-family: inherit; color: #1E293B; transition: background 0.1s; }
+.calc-btn:hover { background: #F1F5F9; }
+.calc-btn.trig { color: #1E293B; font-weight: 600; font-size: 12px; }
+.calc-btn.equals { background: #1E293B; color: #fff; }
+.calc-btn.equals:hover { background: #334155; }
+.calc-btn.backspace { background: #FEF2F2; color: #DC2626; }
+.calc-btn.backspace:hover { background: #FEE2E2; }
+.calc-trig-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #E2E8F0; padding: 1px; }
+#calc-paste { width: calc(100% - 2px); margin: 1px; background: #2D7A4F; color: #fff; border: none; padding: 0.55rem; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+#calc-paste:hover { background: #235f3d; }
 #calc-paste:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Mode tabs ── */
-.tab-bar { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 0 2rem; display: flex; }
-.tab { padding: 0.65rem 1.5rem; font-size: 0.875rem; font-weight: 600; border: none; background: transparent; cursor: pointer; border-bottom: 3px solid transparent; color: #6B7A99; font-family: inherit; }
-.tab:hover { color: #1B2A4A; }
-.tab-active { border-bottom: 3px solid #3DCD58 !important; color: #1B2A4A !important; }
+.ref-panel { min-height: 0; }
+.feature-body { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 <!-- Top navigation bar -->
 <div class="topbar">
-  <img src="/static/assets/logo.jpg" alt="TAQANA Energy Solutions" class="topbar-logo">
+  <img src="/static/assets/taqana_logo.png" alt="TAQANA Energy Solutions" class="topbar-logo"
+       onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+  <div class="logo-fallback" style="display:none">
+    <span class="logo-name">TAQANA</span>
+    <span class="logo-sub">ENERGY SOLUTIONS</span>
+  </div>
   <div class="topbar-divider"></div>
-  <span class="topbar-label">Busbar Generator</span>
+  <span class="topbar-label">Busbar generator</span>
 </div>
 
+<!-- Mode tabs -->
 <div class="tab-bar">
   <button type="button" class="tab tab-active" id="tab-form">Form</button>
-  <button type="button" class="tab" id="tab-direct">Direct Input</button>
+  <button type="button" class="tab" id="tab-direct">Direct input</button>
 </div>
 
-<div class="page" id="form-root">
-<div id="form-sections">
-  <!-- Section 1: Bar Dimensions -->
-  <div class="section">
-    <div class="section-title">Bar dimensions</div>
-    <div class="grid-3">
-      <div><label for="bar_thickness">Bar thickness (mm)</label><input type="number" id="bar_thickness" value="10" step="0.1"></div>
-      <div><label for="bar_width">Bar width (mm)</label><input type="number" id="bar_width" value="80" step="0.1"></div>
-      <div><label for="bend_radius">Inner bend radius (mm)</label><input type="number" id="bend_radius" value="10" step="0.1"></div>
-    </div>
-  </div>
+<!-- Workspace -->
+<div class="workspace" id="workspace">
 
-  <!-- Section 2: Filename -->
-  <div class="section">
-    <div class="section-title">Output filename</div>
-    <div>
-      <label for="filename">Filename</label>
-      <input type="text" id="filename" value="busbar" style="max-width:320px">
-      <p class="helper">Saves as <span id="filename-preview">busbar</span>.step and <span id="filename-preview2">busbar</span>.stl</p>
-    </div>
-  </div>
+  <!-- Left: form panel -->
+  <div class="left-panel full-width" id="left-panel">
 
-  <!-- Section 3: Length Reference -->
-  <div class="section">
-    <div class="section-title">Length reference</div>
-    <div class="section-with-ref">
-      <div>
-        <label for="length_reference">Reference type</label>
-        <select id="length_reference" style="max-width:200px">
-          <option value="outside" selected>Outside</option>
-          <option value="inside">Inside</option>
-          <option value="centerline">Centerline</option>
-        </select>
-        <ul class="ref-options" style="margin-top:0.75rem">
-          <li><strong>Outside:</strong> drawing dimension from outer edge through the bend</li>
-          <li><strong>Inside:</strong> dimension from inner edge</li>
-          <li><strong>Centerline:</strong> dimension from bar centerline</li>
-        </ul>
-      </div>
-      <div class="ref-panel" id="length-ref-panel">Add photo to<br>frontend/assets/length_reference.png</div>
-    </div>
-  </div>
+    <!-- Form sections wrapper -->
+    <div id="form-sections">
+      <div class="canvas">
 
-  <!-- Section 4: Segments & Bends -->
-  <div class="section">
-    <div class="section-title">Segments and bends</div>
-    <div class="section-with-ref">
-      <div>
-        <div class="segment-controls">
-          <div class="field"><label for="num_segments">Number of segments</label><input type="number" id="num_segments" value="4" min="1" step="1" style="width:80px"></div>
-          <button type="button" class="btn btn-secondary btn-small" id="update-segments">Update</button>
+        <!-- Zone 1: Bar dimensions -->
+        <div class="zone">
+          <div class="zone-title">Bar dimensions</div>
+          <div class="grid-3">
+            <div><label for="bar_thickness">Thickness (mm)</label><input type="number" id="bar_thickness" value="10" step="0.1"></div>
+            <div><label for="bar_width">Width (mm)</label><input type="number" id="bar_width" value="80" step="0.1"></div>
+            <div><label for="bend_radius">Bend radius (mm)</label><input type="number" id="bend_radius" value="10" step="0.1"></div>
+          </div>
         </div>
-        <div class="segments-row" id="segments-container"></div>
-        <p class="helper" style="margin-top:0.75rem">Bend angle: +ve = clockwise · −ve = counterclockwise</p>
-      </div>
-      <div class="ref-panel" id="segments-ref-panel">Add photo to<br>frontend/assets/segments_bends.png</div>
-    </div>
-  </div>
 
-  <!-- Section 5: Custom Feature Dimensions -->
-  <div class="section">
-    <div class="section-title">Custom feature dimensions</div>
-    <div class="section-with-ref">
-      <div>
-        <div class="grid-2">
-          <div><label for="custom_circle_dim">Custom circle Ø (j)</label><input type="number" id="custom_circle_dim" value="5.5" step="0.1"></div>
-          <div><label for="custom_circle_dim2">Custom circle Ø 2 (k)</label><input type="number" id="custom_circle_dim2" value="0" step="0.1"></div>
-          <div><label for="custom_slot_width">Custom slot width (i)</label><input type="number" id="custom_slot_width" value="11" step="0.1"></div>
-          <div><label for="custom_slot_length">Custom slot length (i)</label><input type="number" id="custom_slot_length" value="16" step="0.1"></div>
+        <!-- Zone 2: Filename + length reference -->
+        <div class="zone">
+          <div class="filename-ref-row">
+            <div>
+              <label for="filename">Output filename</label>
+              <input type="text" id="filename" value="busbar">
+              <p class="helper">Saves as <span id="filename-preview">busbar</span>.step and <span id="filename-preview2">busbar</span>.stl</p>
+            </div>
+            <div>
+              <label for="length_reference">Length reference</label>
+              <select id="length_reference">
+                <option value="outside" selected>Outside</option>
+                <option value="inside">Inside</option>
+                <option value="centerline">Centerline</option>
+              </select>
+            </div>
+          </div>
+          <div class="diagram-bar" id="length-ref-bar" onclick="toggleDiagram('length-ref-expand','length-ref-bar')">
+            <span>&#9656; Length reference diagram</span>
+            <span class="chevron">&#8250;</span>
+          </div>
+          <div class="diagram-expanded" id="length-ref-expand" style="display:none">
+            <div class="ref-panel" id="length-ref-panel"></div>
+          </div>
         </div>
-        <table>
-          <thead><tr><th>Letter</th><th>Type</th><th>Size</th></tr></thead>
-          <tbody>
-            <tr><td>a</td><td>Round hole</td><td>Ø11</td></tr>
-            <tr><td>b</td><td>Round hole</td><td>Ø13</td></tr>
-            <tr><td>c</td><td>Round hole</td><td>Ø14</td></tr>
-            <tr><td>d</td><td>Round hole</td><td>Ø22</td></tr>
-            <tr><td>h</td><td>Round hole</td><td>Ø5</td></tr>
-            <tr><td>e</td><td>Compound slot</td><td>13×18</td></tr>
-            <tr><td>f</td><td>Compound slot</td><td>9×14</td></tr>
-            <tr><td>g</td><td>Compound slot</td><td>11×15</td></tr>
-            <tr><td>i</td><td>Custom slot</td><td>width × length (above)</td></tr>
-            <tr><td>j</td><td>Custom round</td><td>Ø (above)</td></tr>
-            <tr><td>k</td><td>Custom round 2</td><td>Ø (above)</td></tr>
-          </tbody>
-        </table>
+
+        <!-- Zone 3: Segments and bends -->
+        <div class="zone">
+          <div class="zone-title-row">
+            <span class="zone-title">Segments and bends</span>
+            <div class="seg-count-inline">
+              <label for="num_segments">Segments</label>
+              <input type="number" id="num_segments" value="4" min="1" step="1">
+              <button type="button" class="btn-update" id="update-segments">Update</button>
+            </div>
+          </div>
+          <div class="seg-flow" id="segments-container"></div>
+          <p class="seg-hint">Bend angle: +ve = clockwise · −ve = counterclockwise</p>
+          <div class="diagram-bar" id="segments-ref-bar" onclick="toggleDiagram('segments-ref-expand','segments-ref-bar')">
+            <span>&#9656; Segments and bends diagram</span>
+            <span class="chevron">&#8250;</span>
+          </div>
+          <div class="diagram-expanded" id="segments-ref-expand" style="display:none">
+            <div class="ref-panel" id="segments-ref-panel"></div>
+          </div>
+        </div>
+
+        <!-- Zone 4: Custom feature dimensions -->
+        <div class="zone">
+          <div class="zone-title">Custom feature dimensions</div>
+          <div class="grid-2">
+            <div><label for="custom_circle_dim">Circle Ø j (mm)</label><input type="number" id="custom_circle_dim" value="5.5" step="0.1"></div>
+            <div><label for="custom_circle_dim2">Circle Ø 2 k (mm)</label><input type="number" id="custom_circle_dim2" value="0" step="0.1"></div>
+            <div><label for="custom_slot_width">Slot width i (mm)</label><input type="number" id="custom_slot_width" value="11" step="0.1"></div>
+            <div><label for="custom_slot_length">Slot length i (mm)</label><input type="number" id="custom_slot_length" value="16" step="0.1"></div>
+          </div>
+          <table class="feature-table" style="margin-top:0.75rem">
+            <thead><tr><th>Letter</th><th>Type</th><th>Size</th></tr></thead>
+            <tbody>
+              <tr><td>a</td><td>Round hole</td><td>Ø11</td></tr>
+              <tr><td>b</td><td>Round hole</td><td>Ø13</td></tr>
+              <tr><td>c</td><td>Round hole</td><td>Ø14</td></tr>
+              <tr><td>d</td><td>Round hole</td><td>Ø22</td></tr>
+              <tr><td>h</td><td>Round hole</td><td>Ø5</td></tr>
+              <tr><td>e</td><td>Compound slot</td><td>13×18</td></tr>
+              <tr><td>f</td><td>Compound slot</td><td>9×14</td></tr>
+              <tr><td>g</td><td>Compound slot</td><td>11×15</td></tr>
+              <tr><td>i</td><td>Custom slot</td><td>width × length</td></tr>
+              <tr><td>j</td><td>Custom round</td><td>Ø (above)</td></tr>
+              <tr><td>k</td><td>Custom round 2</td><td>Ø (above)</td></tr>
+            </tbody>
+          </table>
+          <div class="diagram-bar" id="feature-ref-bar" onclick="toggleDiagram('feature-ref-expand','feature-ref-bar')">
+            <span>&#9656; Feature type reference</span>
+            <span class="chevron">&#8250;</span>
+          </div>
+          <div class="diagram-expanded" id="feature-ref-expand" style="display:none">
+            <div class="ref-panel" id="feature-ref-panel"></div>
+          </div>
+        </div>
+
+        <!-- Zone 5: Holes and features -->
+        <div class="zone">
+          <div class="zone-title">Holes and features</div>
+          <div id="holes-container"></div>
+          <div class="holes-ref-bar" id="holes-ref-bar" onclick="toggleDiagram('holes-ref-expand','holes-ref-bar')">
+            <span>&#9656;</span>
+            <div class="ref-panel" id="holes-ref-panel" style="border:none;background:transparent;padding:0;min-height:0;font-size:10px;color:#94A3B8;display:inline"></div>
+          </div>
+          <div class="diagram-expanded" id="holes-ref-expand" style="display:none">
+            <div id="holes-ref-img"></div>
+          </div>
+        </div>
+
       </div>
-      <div class="ref-panel" id="feature-ref-panel">Add photo to<br>frontend/assets/feature_types.png</div>
+
+      <!-- Spinner + error (inside form-sections, below canvas) -->
+      <div class="spinner" id="spinner" style="margin-top:0.75rem">Generating — please wait up to 60 seconds…</div>
+      <div class="error-msg" id="error-msg" style="margin-top:0.75rem"></div>
+    </div>
+
+    <!-- Direct input panel -->
+    <div id="direct-input-panel" style="display:none">
+      <div class="canvas" style="padding:1.25rem">
+        <div class="zone-title" style="margin-bottom:0.65rem">Direct input</div>
+        <p class="helper" style="margin-bottom:0.75rem">Paste your Python input block. Click Parse to populate the form, then switch to Form tab to review and edit.</p>
+        <textarea id="direct-input-textarea" rows="22" placeholder="Paste your BAR_THICKNESS = ... block here"></textarea>
+        <div id="direct-input-error"></div>
+        <div class="parse-actions">
+          <button type="button" id="parse-btn" class="btn-parse btn-parse-primary">Parse + populate form</button>
+          <button type="button" id="parse-generate-btn" class="btn-parse btn-parse-secondary">Parse + Generate</button>
+          <span id="parse-success">✓ Parsed successfully</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Draggable divider (hidden until first generation) -->
+  <div class="panel-divider" id="panel-divider" style="display:none">
+    <div class="panel-divider-handle"></div>
+  </div>
+
+  <!-- Minimise bar (hidden until first generation) -->
+  <div class="minimise-bar" id="minimise-bar" style="display:none" title="Minimise form">
+    <span id="minimise-label">‹</span>
+  </div>
+
+  <!-- Right viewer panel (hidden until first generation) -->
+  <div class="right-panel hidden" id="right-panel">
+    <div class="viewer-topbar">
+      <span class="viewer-filename" id="viewer-filename">—</span>
+      <button type="button" class="btn-viewer-expand" id="btn-expand" onclick="expandViewer()">⤢ Expand</button>
+      <button type="button" class="btn-viewer-dl" id="btn-download-step">&#8595; Download STEP</button>
+    </div>
+    <div class="viewer-canvas" id="viewer-canvas">
+      <div class="viewer-placeholder">
+        <div class="icon">&#9632;</div>
+        <span>Click update preview to generate</span>
+      </div>
+    </div>
+    <div class="viewer-footer">
+      <span class="viewer-hint">Drag to orbit · Scroll to zoom · Right-click to pan</span>
     </div>
   </div>
 
-  <!-- Section 6: Holes / Features per Segment -->
-  <div class="section">
-    <div class="section-title">Holes and features per segment</div>
-    <div id="holes-container"></div>
-    <div class="holes-ref-horizontal" id="holes-ref-panel">Add photo to frontend/assets/hole_positions.png</div>
-  </div>
-</div><!-- /form-sections -->
-
-<div id="direct-input-panel" style="display:none">
-  <div class="section">
-    <div class="section-title">Direct input</div>
-    <p class="helper" style="margin-bottom:0.75rem">
-      Paste your Python input block directly. Click Parse to populate the form,
-      then switch to Form tab to review and edit before generating.
-    </p>
-    <textarea id="direct-input-textarea"
-      placeholder="Paste your BAR_THICKNESS = ... block here"
-      rows="24"
-      style="width:100%; font-family:'Courier New',monospace; font-size:0.85rem;
-             background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px;
-             padding:0.75rem; color:#1B2A4A; resize:vertical; line-height:1.6;"></textarea>
-    <div id="direct-input-error" style="display:none; margin-top:0.5rem;
-      padding:0.65rem 0.85rem; background:#FEF2F2; border:1px solid #FECACA;
-      border-radius:6px; color:#DC2626; font-size:0.82rem;"></div>
-    <div style="display:flex; gap:0.75rem; margin-top:0.75rem; align-items:center; flex-wrap:wrap;">
-      <button type="button" id="parse-btn" class="btn btn-accent">Parse + populate form</button>
-      <button type="button" id="parse-generate-btn" class="btn" style="background:#1B2A4A;color:#fff;">Parse + Generate</button>
-      <span id="parse-success" style="display:none; color:#16a34a; font-size:0.82rem; font-weight:600;">✓ Parsed successfully</span>
-    </div>
-  </div>
 </div>
 
-  <!-- Generate -->
-  <div class="generate-wrap">
-    <button type="button" class="btn-generate" id="generate-btn">
-      <span>Generate</span><span class="accent">STEP + 3D preview</span>
-    </button>
-    <div class="spinner" id="spinner">Generating — this may take up to 60 seconds…</div>
-    <div class="error-msg" id="error-msg"></div>
-  </div>
-</div>
+<!-- Floating Update Preview button -->
+<button type="button" class="btn-float-preview" id="generate-btn">&#8635; Update preview</button>
 
-<button type="button" id="calc-toggle">⊞ Calc</button>
-<div id="calc-panel">
+<!-- Calculator toggle -->
+<button type="button" id="calc-toggle" style="display:none">⊞ Calc</button>
+
+<!-- Calculator panel -->
+<div id="calc-panel" style="display:none">
   <div class="calc-header">
-    <span>Calculator</span>
-    <button type="button" id="calc-close" aria-label="Close">×</button>
+    Calculator
+    <button type="button" class="calc-close-btn" id="calc-close">×</button>
   </div>
   <div id="calc-display">0</div>
-  <div class="calc-grid" id="calc-grid"></div>
+  <div class="calc-trig-row">
+    <button type="button" class="calc-btn trig" data-calc="sin(">sin</button>
+    <button type="button" class="calc-btn trig" data-calc="cos(">cos</button>
+    <button type="button" class="calc-btn trig" data-calc="tan(">tan</button>
+    <button type="button" class="calc-btn" data-calc="(">(</button>
+    <button type="button" class="calc-btn backspace" id="calc-back">←</button>
+  </div>
+  <div class="calc-grid">
+    <button type="button" class="calc-btn" data-calc="7">7</button>
+    <button type="button" class="calc-btn" data-calc="8">8</button>
+    <button type="button" class="calc-btn" data-calc="9">9</button>
+    <button type="button" class="calc-btn" data-calc="/">÷</button>
+    <button type="button" class="calc-btn" data-calc="4">4</button>
+    <button type="button" class="calc-btn" data-calc="5">5</button>
+    <button type="button" class="calc-btn" data-calc="6">6</button>
+    <button type="button" class="calc-btn" data-calc="*">×</button>
+    <button type="button" class="calc-btn" data-calc="1">1</button>
+    <button type="button" class="calc-btn" data-calc="2">2</button>
+    <button type="button" class="calc-btn" data-calc="3">3</button>
+    <button type="button" class="calc-btn" data-calc="-">−</button>
+    <button type="button" class="calc-btn" data-calc="0">0</button>
+    <button type="button" class="calc-btn" data-calc=".">.</button>
+    <button type="button" class="calc-btn equals" id="calc-equals">=</button>
+    <button type="button" class="calc-btn" data-calc="+">+</button>
+  </div>
   <button type="button" id="calc-paste" disabled>Paste to field</button>
 </div>
+
 
   <script>
     const FEATURE_LETTERS = ['a','b','c','d','e','f','g','h','i','j','k'];
@@ -380,18 +494,22 @@ tr:last-child td { border-bottom: none; }
       container.innerHTML = '';
       for (let i = 1; i <= segmentCount; i++) {
         const segDiv = document.createElement('div');
-        segDiv.className = 'segment-field';
-        segDiv.innerHTML = `<label for="seg_len_${i}">Segment ${i} length (mm)</label><input type="number" id="seg_len_${i}" step="0.001" value="${prevLengths[i-1] ?? (i === 1 ? 97 : i === 2 ? 210 : i === 3 ? 72.9 : 200.998)}">`;
+        segDiv.className = 'seg-block';
+        segDiv.innerHTML = `<label for="seg_len_${i}">Seg ${i}</label><input type="number" id="seg_len_${i}" step="0.001" value="${prevLengths[i-1] ?? (i === 1 ? 97 : i === 2 ? 210 : i === 3 ? 72.9 : 200.998)}">`;
         container.appendChild(segDiv);
         if (i < segmentCount) {
-          const arrow = document.createElement('span');
-          arrow.className = 'bend-arrow';
-          arrow.textContent = '→';
-          container.appendChild(arrow);
+          const conn1 = document.createElement('div');
+          conn1.className = 'seg-connector';
+          conn1.innerHTML = '<div class="seg-connector-line"></div><span class="seg-connector-arrow">→</span>';
+          container.appendChild(conn1);
           const bendDiv = document.createElement('div');
-          bendDiv.className = 'bend-field';
-          bendDiv.innerHTML = `<label for="bend_angle_${i}">Bend ${i} angle (°)</label><input type="number" id="bend_angle_${i}" step="0.1" value="${prevAngles[i-1] ?? (i === 1 ? 90 : i === 2 ? -10 : 10)}">`;
+          bendDiv.className = 'bend-block';
+          bendDiv.innerHTML = `<label for="bend_angle_${i}">∠${i}</label><input type="number" id="bend_angle_${i}" step="0.1" value="${prevAngles[i-1] ?? (i === 1 ? 90 : i === 2 ? -10 : 10)}">`;
           container.appendChild(bendDiv);
+          const conn2 = document.createElement('div');
+          conn2.className = 'seg-connector';
+          conn2.innerHTML = '<div class="seg-connector-line"></div><span class="seg-connector-arrow">→</span>';
+          container.appendChild(conn2);
         }
       }
       renderHoles();
@@ -403,7 +521,7 @@ tr:last-child td { border-bottom: none; }
       options.forEach(([value, label]) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'toggle-btn' + (activeValue === value ? ' active' : '');
+        btn.className = 'tgl' + (activeValue === value ? ' tgl-active' : '');
         btn.textContent = label;
         btn.onclick = () => onSelect(value);
         pair.appendChild(btn);
@@ -438,9 +556,8 @@ tr:last-child td { border-bottom: none; }
         panel.appendChild(featuresDiv);
         const addBtn = document.createElement('button');
         addBtn.type = 'button';
-        addBtn.className = 'btn btn-secondary btn-small';
-        addBtn.textContent = 'Add feature';
-        addBtn.style.marginTop = '0.5rem';
+        addBtn.className = 'btn-add-feature';
+        addBtn.textContent = '+ Add feature';
         addBtn.onclick = () => {
           const segNum = i;
           const isLast = (segNum === segmentCount);
@@ -598,7 +715,7 @@ tr:last-child td { border-bottom: none; }
       const spinner = document.getElementById('spinner');
       const errorMsg = document.getElementById('error-msg');
       const btn = document.getElementById('generate-btn');
-      spinner.classList.add('active'); errorMsg.classList.remove('active'); btn.disabled = true;
+      spinner.classList.add('active'); errorMsg.classList.remove('active'); btn.disabled = true; btn.classList.add('loading');
       try {
         saveFormState();
         const payload = collectPayload();
@@ -606,7 +723,28 @@ tr:last-child td { border-bottom: none; }
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail?.message || data.message || JSON.stringify(data));
         const stlFilename = data.stl_file.split('/').pop();
-        window.location.href = `/viewer?file=${encodeURIComponent(stlFilename)}`;
+        // First generation: show split layout
+        if (!hasGenerated) showSplitLayout();
+
+        // Update viewer panel
+        const filenameLabel = document.getElementById('viewer-filename');
+        filenameLabel.textContent = stlFilename;
+
+        // Download STEP button
+        const stepFilename = stlFilename.replace('.stl', '.step');
+        const dlBtn = document.getElementById('btn-download-step');
+        dlBtn.onclick = () => {
+          const a = document.createElement('a');
+          a.href = `/output/${encodeURIComponent(stepFilename)}`;
+          a.download = stepFilename;
+          a.click();
+        };
+
+        // Load STL into panel
+        loadSTLInPanel(stlFilename);
+
+        // Save state
+        saveFormState();
       } catch (err) {
         errorMsg.textContent = err.message; errorMsg.classList.add('active');
         if (activeMode === 'direct') {
@@ -614,7 +752,7 @@ tr:last-child td { border-bottom: none; }
           if (diErr) { diErr.style.display = 'block'; diErr.textContent = err.message; }
         }
       } finally {
-        spinner.classList.remove('active'); btn.disabled = false;
+        spinner.classList.remove('active'); btn.disabled = false; btn.classList.remove('loading');
       }
     }
 
@@ -622,20 +760,17 @@ tr:last-child td { border-bottom: none; }
       activeMode = mode;
       const formSections = document.getElementById('form-sections');
       const directPanel = document.getElementById('direct-input-panel');
-      const generateWrap = document.querySelector('.generate-wrap');
       const tabForm = document.getElementById('tab-form');
       const tabDirect = document.getElementById('tab-direct');
 
       if (mode === 'form') {
         formSections.style.display = '';
         directPanel.style.display = 'none';
-        generateWrap.style.display = '';
         tabForm.classList.add('tab-active');
         tabDirect.classList.remove('tab-active');
       } else {
         formSections.style.display = 'none';
         directPanel.style.display = '';
-        generateWrap.style.display = 'none';
         tabForm.classList.remove('tab-active');
         tabDirect.classList.add('tab-active');
       }
@@ -934,65 +1069,24 @@ tr:last-child td { border-bottom: none; }
     }
 
     function buildCalculator() {
-      const grid = document.getElementById('calc-grid');
-      grid.innerHTML = '';
-      const layout = [
-        { t: 'sin', cls: 'trig', a: () => appendCalc('sin(') },
-        { t: 'cos', cls: 'trig', a: () => appendCalc('cos(') },
-        { t: 'tan', cls: 'trig', a: () => appendCalc('tan(') },
-        { t: '( )', a: () => {
-          const last = calcExpression.slice(-1);
-          if (!calcExpression || /[+\-*/÷×−(]/.test(last)) appendCalc('(');
-          else appendCalc(')');
-        }},
-        { t: '←', cls: 'backspace', a: () => { calcResult = null; calcExpression = calcExpression.slice(0, -1); updateCalcDisplay(); } },
-        { t: '7', a: () => appendCalc('7') },
-        { t: '8', a: () => appendCalc('8') },
-        { t: '9', a: () => appendCalc('9') },
-        { t: '÷', a: () => appendCalc('÷') },
-        { t: '4', a: () => appendCalc('4') },
-        { t: '5', a: () => appendCalc('5') },
-        { t: '6', a: () => appendCalc('6') },
-        { t: '×', a: () => appendCalc('×') },
-        { t: '1', a: () => appendCalc('1') },
-        { t: '2', a: () => appendCalc('2') },
-        { t: '3', a: () => appendCalc('3') },
-        { t: '−', a: () => appendCalc('−') },
-        { t: '0', a: () => appendCalc('0') },
-        { t: '.', a: () => appendCalc('.') },
-        { t: '=', cls: 'equals', a: evalCalc },
-        { t: '+', a: () => appendCalc('+') },
-      ];
-      const firstRow = document.createElement('div');
-      firstRow.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem;';
-      const rest = document.createElement('div');
-      rest.style.cssText = 'grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;';
-      layout.slice(0, 5).forEach(b => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'calc-btn' + (b.cls ? ' ' + b.cls : '');
-        btn.textContent = b.t;
-        btn.onclick = b.a;
-        firstRow.appendChild(btn);
+      document.querySelectorAll('#calc-panel .calc-btn[data-calc]').forEach(btn => {
+        btn.addEventListener('click', () => appendCalc(btn.getAttribute('data-calc')));
       });
-      layout.slice(5).forEach(b => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'calc-btn' + (b.cls ? ' ' + b.cls : '');
-        btn.textContent = b.t;
-        btn.onclick = b.a;
-        rest.appendChild(btn);
+      document.getElementById('calc-back').addEventListener('click', () => {
+        calcResult = null;
+        calcExpression = calcExpression.slice(0, -1);
+        updateCalcDisplay();
       });
-      grid.appendChild(firstRow);
-      grid.appendChild(rest);
+      document.getElementById('calc-equals').addEventListener('click', evalCalc);
       updateCalcDisplay();
     }
 
     document.getElementById('calc-toggle').addEventListener('click', () => {
-      document.getElementById('calc-panel').classList.toggle('open');
+      const panel = document.getElementById('calc-panel');
+      panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
     });
     document.getElementById('calc-close').addEventListener('click', () => {
-      document.getElementById('calc-panel').classList.remove('open');
+      document.getElementById('calc-panel').style.display = 'none';
     });
     document.getElementById('calc-paste').addEventListener('click', () => {
       if (lastFocusedInput == null || calcResult === null) return;
@@ -1001,7 +1095,7 @@ tr:last-child td { border-bottom: none; }
       lastFocusedInput.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    document.getElementById('form-root').addEventListener('focusin', (e) => {
+    document.getElementById('left-panel').addEventListener('focusin', (e) => {
       const t = e.target;
       if (t && (t.tagName === 'INPUT') && (t.type === 'number' || t.type === 'text') && t.id !== 'calc-display') {
         lastFocusedInput = t;
@@ -1025,8 +1119,8 @@ tr:last-child td { border-bottom: none; }
     document.getElementById('parse-btn').addEventListener('click', () => handleParse(false));
     document.getElementById('parse-generate-btn').addEventListener('click', () => handleParse(true));
 
-    document.getElementById('form-root').addEventListener('input', scheduleSaveFormState);
-    document.getElementById('form-root').addEventListener('change', scheduleSaveFormState);
+    document.getElementById('left-panel').addEventListener('input', scheduleSaveFormState);
+    document.getElementById('left-panel').addEventListener('change', scheduleSaveFormState);
     document.getElementById('direct-input-textarea').addEventListener('input', scheduleSaveFormState);
 
     document.getElementById('filename').addEventListener('input', updateFilenamePreview);
@@ -1041,6 +1135,150 @@ tr:last-child td { border-bottom: none; }
     tryLoadRef('length-ref-panel', '/static/assets/length_reference.png', 'Reference diagram — add photo to frontend/assets/length_reference.png');
     tryLoadRef('segments-ref-panel', '/static/assets/segments_bends.png', 'Reference diagram — add photo to frontend/assets/segments_bends.png');
     tryLoadRef('feature-ref-panel', '/static/assets/feature_types.png', 'Feature type reference — add photo to frontend/assets/feature_types.png');
+
+    // ── Layout state ──────────────────────────────────────────
+    let hasGenerated = false;
+    let isMinimised = false;
+
+    function showSplitLayout() {
+      const leftPanel = document.getElementById('left-panel');
+      const divider = document.getElementById('panel-divider');
+      const minimiseBar = document.getElementById('minimise-bar');
+      const rightPanel = document.getElementById('right-panel');
+      const calcToggle = document.getElementById('calc-toggle');
+
+      leftPanel.classList.remove('full-width');
+      leftPanel.style.width = '55%';
+      divider.style.display = 'flex';
+      minimiseBar.style.display = 'flex';
+      rightPanel.classList.remove('hidden');
+      calcToggle.style.display = 'block';
+      hasGenerated = true;
+    }
+
+    function toggleMinimise() {
+      const leftPanel = document.getElementById('left-panel');
+      const divider = document.getElementById('panel-divider');
+      const label = document.getElementById('minimise-label');
+      isMinimised = !isMinimised;
+      if (isMinimised) {
+        leftPanel.classList.add('minimised');
+        divider.style.display = 'none';
+        label.textContent = '›';
+      } else {
+        leftPanel.classList.remove('minimised');
+        leftPanel.style.width = '55%';
+        divider.style.display = 'flex';
+        label.textContent = '‹';
+      }
+    }
+
+    document.getElementById('minimise-bar').addEventListener('click', toggleMinimise);
+
+    // ── Draggable divider ────────────────────────────────────
+    (function() {
+      const divider = document.getElementById('panel-divider');
+      const leftPanel = document.getElementById('left-panel');
+      const workspace = document.getElementById('workspace');
+      let dragging = false;
+      divider.addEventListener('mousedown', (e) => {
+        dragging = true;
+        divider.classList.add('dragging');
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const rect = workspace.getBoundingClientRect();
+        let pct = ((e.clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(20, Math.min(80, pct));
+        leftPanel.style.width = pct + '%';
+      });
+      document.addEventListener('mouseup', () => {
+        dragging = false;
+        divider.classList.remove('dragging');
+      });
+    })();
+
+    // ── Diagram collapse bars ────────────────────────────────
+    function toggleDiagram(expandId, barId) {
+      const expand = document.getElementById(expandId);
+      const bar = document.getElementById(barId);
+      const isOpen = expand.style.display !== 'none';
+      expand.style.display = isOpen ? 'none' : 'block';
+      bar.classList.toggle('open', !isOpen);
+    }
+
+    // ── Expand to full viewer.html ───────────────────────────
+    function expandViewer() {
+      const filename = document.getElementById('viewer-filename').textContent;
+      if (filename && filename !== '—') {
+        window.open(`/viewer?file=${encodeURIComponent(filename)}`, '_blank');
+      }
+    }
+
+    // ── In-panel STL viewer (three.js) ──────────────────────
+    function loadSTLInPanel(stlFilename) {
+      const canvas = document.getElementById('viewer-canvas');
+      canvas.innerHTML = '';
+
+      const THREE = window.THREE;
+      if (!THREE) {
+        canvas.innerHTML = '<div class="viewer-placeholder"><span>3D viewer not loaded</span></div>';
+        return;
+      }
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0F1117);
+      const w = canvas.clientWidth || 400;
+      const h = canvas.clientHeight || 400;
+      const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      canvas.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const d1 = new THREE.DirectionalLight(0xffffff, 0.8);
+      d1.position.set(100, 200, 100); scene.add(d1);
+      const d2 = new THREE.DirectionalLight(0xffffff, 0.3);
+      d2.position.set(-100, -50, -100); scene.add(d2);
+
+      const loader = new THREE.STLLoader();
+      loader.load(
+        `/output/${encodeURIComponent(stlFilename)}`,
+        (geometry) => {
+          geometry.computeVertexNormals();
+          const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xe67e22, metalness: 0.5, roughness: 0.4 }));
+          scene.add(mesh);
+          geometry.computeBoundingBox();
+          const center = new THREE.Vector3();
+          geometry.boundingBox.getCenter(center);
+          mesh.position.sub(center);
+          const sphere = geometry.boundingBox.getBoundingSphere(new THREE.Sphere());
+          const dist = sphere.radius * 2.5;
+          camera.position.set(dist, dist * 0.75, dist);
+          camera.lookAt(0, 0, 0);
+          controls.target.set(0, 0, 0);
+          controls.update();
+        },
+        undefined,
+        () => { canvas.innerHTML = '<div class="viewer-placeholder"><span>Failed to load model</span></div>'; }
+      );
+
+      (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
+
+      const ro = new ResizeObserver(() => {
+        const nw = canvas.clientWidth; const nh = canvas.clientHeight;
+        camera.aspect = nw / nh; camera.updateProjectionMatrix();
+        renderer.setSize(nw, nh);
+      });
+      ro.observe(canvas);
+    }
+
+
     tryLoadRef('holes-ref-panel', '/static/assets/hole_positions.png', 'Hole position reference — add photo to frontend/assets/hole_positions.png');
     for (let i = 1; i <= segmentCount; i++) holeState[String(i)] = [];
     restoreFormState();
@@ -1068,6 +1306,9 @@ tr:last-child td { border-bottom: none; }
     buildCalculator();
 
     // Expose helpers for manual testing in console
+    window.toggleDiagram = toggleDiagram;
+    window.expandViewer = expandViewer;
+
     window.__busbarTest = {
       convertPosition,
       collectHolesBySegment,
