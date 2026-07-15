@@ -4,3 +4,4 @@ __pycache__/
 .env
 Claude_files/
 mamba_install.log
+busbar_python_path.txt
