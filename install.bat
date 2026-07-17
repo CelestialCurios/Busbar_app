@@ -62,14 +62,22 @@ echo [3/4] Creating busbar environment with Python 3.10 + CadQuery...
 echo     This will take 10-20 minutes on first run.
 echo.
 
-"%CONDA_EXE%" create -n busbar python=3.10 cadquery=2.8 -c conda-forge -c defaults --ssl-verify false -y
+:: Try conda 26.x syntax first (channels before packages)
+"%CONDA_EXE%" create -n busbar -c conda-forge -c defaults python=3.10 cadquery=2.8 --override-channels --ssl-verify false -y
 
 if %ERRORLEVEL% NEQ 0 (
   echo.
-  echo ERROR: Environment creation failed.
-  echo Check your internet connection and try again.
-  echo If you are on a corporate network, you may need to
-  echo contact your IT department about SSL certificate issues.
+  echo     First attempt failed. Trying alternative syntax...
+  echo.
+  "%CONDA_EXE%" create -n busbar --channel conda-forge --channel defaults python=3.10 cadquery=2.8 --ssl-verify false -y
+)
+
+if %ERRORLEVEL% NEQ 0 (
+  echo.
+  echo ERROR: Environment creation failed on both attempts.
+  echo.
+  echo Please try running this manually in Anaconda Prompt:
+  echo   conda create -n busbar -c conda-forge python=3.10 cadquery=2.8
   echo.
   pause
   exit /b 1
