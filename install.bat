@@ -2,27 +2,32 @@
 setlocal EnableDelayedExpansion
 
 echo ============================================================
-echo  TAQANA Busbar Generator — Installation
+echo  TAQANA Busbar Generator -- Installation
 echo ============================================================
 echo.
 echo This will set up the busbar Python environment.
 echo It requires an internet connection and takes ~15 minutes.
 echo.
 
-:: ── Step 1: Find conda ──────────────────────────────────────
+:: ── Step 1: Find conda root directory ───────────────────────
 echo [1/4] Looking for conda...
 
-set CONDA_EXE=
+set CONDA_ROOT=
 for %%P in (
-  "%USERPROFILE%\miniconda3\Scripts\conda.exe"
-  "%USERPROFILE%\anaconda3\Scripts\conda.exe"
-  "%LOCALAPPDATA%\miniconda3\Scripts\conda.exe"
-  "%LOCALAPPDATA%\Continuum\miniconda3\Scripts\conda.exe"
-  "C:\miniconda3\Scripts\conda.exe"
-  "C:\anaconda3\Scripts\conda.exe"
+  "%USERPROFILE%\miniconda3"
+  "%USERPROFILE%\anaconda3"
+  "%USERPROFILE%\AppData\Local\miniconda3"
+  "%USERPROFILE%\AppData\Local\anaconda3"
+  "%USERPROFILE%\AppData\Local\Continuum\miniconda3"
+  "%LOCALAPPDATA%\miniconda3"
+  "%LOCALAPPDATA%\anaconda3"
+  "C:\miniconda3"
+  "C:\anaconda3"
+  "C:\ProgramData\miniconda3"
+  "C:\ProgramData\anaconda3"
 ) do (
-  if exist %%P (
-    set CONDA_EXE=%%P
+  if exist "%%~P\Scripts\conda.exe" (
+    set CONDA_ROOT=%%~P
     goto :found_conda
   )
 )
@@ -35,123 +40,105 @@ echo Please install Miniconda first:
 echo   https://docs.conda.io/en/latest/miniconda.html
 echo.
 echo Choose the Windows 64-bit installer.
-echo During install, check "Add Miniconda to PATH" if asked.
+echo Use all default settings during installation.
 echo Then run install.bat again.
 echo.
 pause
 exit /b 1
 
 :found_conda
-echo     Found conda at: %CONDA_EXE%
+echo     Found conda at: %CONDA_ROOT%
 echo.
+
+:: Set conda exe path (no extra quotes — CONDA_ROOT already has none)
+set CONDA_EXE=%CONDA_ROOT%\Scripts\conda.exe
 
 :: ── Step 2: Check if busbar env already exists ───────────────
 echo [2/4] Checking for existing busbar environment...
 
-"%CONDA_EXE%" env list 2>nul | findstr /C:"busbar" >nul
-if %ERRORLEVEL% EQU 0 (
+if exist "%CONDA_ROOT%\envs\busbar\python.exe" (
   echo     Environment 'busbar' already exists.
-  echo     Skipping creation. If you want to reinstall, run:
-  echo       conda env remove -n busbar
-  echo     Then run install.bat again.
-  goto :verify
+  echo     Skipping creation.
+  set BUSBAR_PYTHON=%CONDA_ROOT%\envs\busbar\python.exe
+  goto :install_pip
 )
 
 :: ── Step 3: Create environment ───────────────────────────────
-echo [3/4] Creating busbar environment with Python 3.10 + CadQuery...
+echo [3/4] Creating busbar environment with Python 3.11 + CadQuery...
 echo     This will take 10-20 minutes on first run.
 echo.
 
-:: Try conda 26.x syntax first (channels before packages)
-"%CONDA_EXE%" create -n busbar -c conda-forge -c defaults python=3.10 cadquery=2.8 --override-channels --ssl-verify false -y
+call "%CONDA_EXE%" create -n busbar -c conda-forge python=3.11 cadquery --ssl-verify false -y
 
 if %ERRORLEVEL% NEQ 0 (
   echo.
-  echo     First attempt failed. Trying alternative syntax...
+  echo     First attempt failed. Trying without ssl-verify flag...
   echo.
-  "%CONDA_EXE%" create -n busbar --channel conda-forge --channel defaults python=3.10 cadquery=2.8 --ssl-verify false -y
+  call "%CONDA_EXE%" create -n busbar -c conda-forge python=3.11 cadquery -y
 )
 
 if %ERRORLEVEL% NEQ 0 (
   echo.
-  echo ERROR: Environment creation failed on both attempts.
+  echo ERROR: Environment creation failed.
   echo.
   echo Please try running this manually in Anaconda Prompt:
-  echo   conda create -n busbar -c conda-forge python=3.10 cadquery=2.8
+  echo   conda create -n busbar -c conda-forge python=3.11 cadquery
+  echo.
+  echo If that also fails, check your internet connection and try again.
   echo.
   pause
   exit /b 1
 )
 
 :: ── Step 4: Install FastAPI + uvicorn ────────────────────────
+:install_pip
 echo.
 echo [4/4] Installing FastAPI and uvicorn...
 
-:: Find the busbar env python
-set BUSBAR_PYTHON=
-for %%P in (
-  "%USERPROFILE%\miniconda3\envs\busbar\python.exe"
-  "%USERPROFILE%\anaconda3\envs\busbar\python.exe"
-  "%LOCALAPPDATA%\miniconda3\envs\busbar\python.exe"
-  "C:\miniconda3\envs\busbar\python.exe"
-  "C:\anaconda3\envs\busbar\python.exe"
-) do (
-  if exist %%P (
-    set BUSBAR_PYTHON=%%P
-    goto :found_python
-  )
-)
+set BUSBAR_PYTHON=%CONDA_ROOT%\envs\busbar\python.exe
 
-echo ERROR: Could not find busbar env python.exe after creation.
-echo Please report this error.
-pause
-exit /b 1
-
-:found_python
-echo     Found busbar Python at: %BUSBAR_PYTHON%
-
-"%BUSBAR_PYTHON%" -m pip install fastapi uvicorn[standard] --quiet
-
-if %ERRORLEVEL% NEQ 0 (
+if not exist "%BUSBAR_PYTHON%" (
+  echo ERROR: Could not find python.exe in busbar environment.
+  echo Expected at: %BUSBAR_PYTHON%
   echo.
-  echo ERROR: pip install failed.
+  echo Please run this manually in Anaconda Prompt:
+  echo   conda activate busbar
+  echo   pip install fastapi "uvicorn[standard]"
   echo.
   pause
   exit /b 1
 )
 
-:: ── Save python path for run.bat ─────────────────────────────
-echo %BUSBAR_PYTHON% > busbar_python_path.txt
+"%BUSBAR_PYTHON%" -m pip install fastapi "uvicorn[standard]" --quiet
+
+if %ERRORLEVEL% NEQ 0 (
+  echo.
+  echo ERROR: pip install failed.
+  echo.
+  echo Please run this manually in Anaconda Prompt:
+  echo   conda activate busbar
+  echo   pip install fastapi "uvicorn[standard]"
+  echo.
+  pause
+  exit /b 1
+)
+
+:: ── Save python path ─────────────────────────────────────────
+echo %BUSBAR_PYTHON%> busbar_python_path.txt
 echo     Saved Python path to busbar_python_path.txt
 
-goto :done
+:: ── Verify CadQuery ──────────────────────────────────────────
+"%BUSBAR_PYTHON%" -c "import cadquery; print('CadQuery', cadquery.__version__, 'ready')"
 
-:verify
-:: Env existed — find python and save path
-echo     Verifying existing environment...
-set BUSBAR_PYTHON=
-for %%P in (
-  "%USERPROFILE%\miniconda3\envs\busbar\python.exe"
-  "%USERPROFILE%\anaconda3\envs\busbar\python.exe"
-  "%LOCALAPPDATA%\miniconda3\envs\busbar\python.exe"
-  "C:\miniconda3\envs\busbar\python.exe"
-  "C:\anaconda3\envs\busbar\python.exe"
-) do (
-  if exist %%P (
-    set BUSBAR_PYTHON=%%P
-    goto :verify_pip
-  )
+if %ERRORLEVEL% NEQ 0 (
+  echo.
+  echo WARNING: CadQuery import check failed.
+  echo The environment may be incomplete. Try running install.bat again.
+  echo.
+  pause
+  exit /b 1
 )
-echo ERROR: Could not find busbar python.exe. Try removing and recreating:
-echo   conda env remove -n busbar
-pause
-exit /b 1
 
-:verify_pip
-"%BUSBAR_PYTHON%" -m pip install fastapi uvicorn[standard] --quiet
-echo %BUSBAR_PYTHON% > busbar_python_path.txt
-
-:done
 echo.
 echo ============================================================
 echo  Installation complete!
